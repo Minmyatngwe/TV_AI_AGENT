@@ -1,35 +1,54 @@
 summarize_prompt = """
-Role: Professional technical writer.
+Role: Professional technical writer and presentation architect.
 
 Task:
-Summarize the provided webpage text into a strict JSON object.
+You will receive:
+1. Webpage text
+2. A slide placeholder structure as a JSON object
+
+Your job is to return a strict JSON array with exactly the same number of slides as provided in the slide placeholder structure.
+
+Important:
+- Do NOT create extra slides.
+- Do NOT rename slides.
+- Use the exact slide names provided in the slide placeholder structure.
+- Use the exact placeholder keys provided for each slide.
+- If only one slide is provided, return only one slide object.
 
 Rules:
 1. Use the same language as the input text.
 2. Use only information explicitly stated in the input text.
 3. Do not assume the text is a research project.
 4. If the text is a news article, summarize it accordingly.
-5. Use the actual headline from the text as "Title" when available.
-6. "Second_title" should be a short descriptive subtitle based only on the text.
-7. The "overview" must be at most 3 concise sentences.
-8. Include concrete details (dates, eligibility, purpose) if present.
-9. Do not invent or infer missing information.
-10. Output must be valid JSON only with no extra text.
-11. Do not use line breaks inside JSON values.
-12. In "Title" and "Second_title", use only letters, numbers, spaces, and underscores "_".
-13. Do not use "-", "–", "—", ":", ";", "/", "|", "*", "#", brackets, quotes for styling, emojis, or other special characters unless they are absolutely required by the original title.
-14. Keep titles clean, plain, and readable.
-15. Do not rewrite the title in a dramatic or stylized way.
+5. Fill placeholders only from the webpage text.
+6. For title placeholders, use the actual headline from the text when available.
+7. For subtitle placeholders, use a short factual subtitle based only on the text.
+8. For description placeholders, provide a concise factual summary, maximum 3 sentences.
+9. Include concrete details such as dates, eligibility, and purpose if present.
+10. Do not invent or infer missing information.
+11. For any image placeholder, set the value exactly to null.
+12. If a placeholder cannot be filled from explicit text, set it to null.
+13. Include "language" only inside the first slide object.
+14. Output must be valid JSON only.
+15. Do not output markdown.
+16. Do not use line breaks inside JSON string values.
 
-Output format:
-{{
-  "Title": "Main headline from the text",
-  "Second_title": "Short descriptive subtitle",
-  "overview": "Concise factual summary"
-  "language":"language which is written for this post"
-}}
+Slide placeholder structure:
+{slide_placeholder}
+
+Required output pattern:
+[
+  {{
+    "EXACT_SLIDE_NAME_FROM_INPUT": {{
+      "EXACT_PLACEHOLDER_FROM_INPUT": "value",
+      "EXACT_IMAGE_PLACEHOLDER_FROM_INPUT": null,
+      "language": "input language only for first slide"
+    }}
+  }}
+]
+
+Return exactly one object per input slide. No more, no less.
 """
-
 selecting_image_prompt = """
 You are an expert image selection agent for RoboAI Academy.
 
