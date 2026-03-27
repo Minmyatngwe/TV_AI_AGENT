@@ -1,0 +1,13 @@
+uvicorn
+fastapi
+dotenv
+requests
+numpy
+langchain_community
+langchain_ollama
+langchain
+ddgs
+beautifulsoup4
+cloudscraper
+playwright
+playwright_stealth
