@@ -12,7 +12,7 @@ st.set_page_config(
     layout="wide"
 )
 
-st.logo("logos/samk.png", size="large")
+st.logo("logos/roboai.png", size="large")
 
 pg = st.navigation([
     st.Page("pages/home.py", title="Home", icon=":material/home:"),
