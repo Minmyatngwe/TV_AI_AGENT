@@ -50,7 +50,8 @@ def extract_from_shapes(shapes, placeholder_list):
     """
     
     for shape in shapes:
-        if "image" in shape.name.lower():
+        shape_name = shape.name.lower().strip()
+        if "image" in shape_name or "qr_code" in shape_name:
             placeholder_list.append(shape.name)
 
         if shape.shape_type == MSO_SHAPE_TYPE.GROUP:
@@ -92,33 +93,57 @@ def get_placeholder_name(slides_path):
     return slide_placeholder
 
 
-def recursive_replace(shapes,ai_response,slide_name,folder_path):
+def normalize_placeholder(text):
+    return text.replace("\xa0", " ").strip()
+
+def recursive_replace(shapes, ai_response, slide_name, folder_path):
+    tempo_dict = None
     for slide_dict in ai_response:
-        if list(slide_dict.keys())[0]==slide_name:
-            tempo_dict=slide_dict[slide_name]
-    for shape in shapes:
-        if "image" in shape.name.lower():
-            image_path=os.path.join(folder_path,tempo_dict[shape.name.lower()])
-            left = shape.left
-            top = shape.top
-            width = shape.width
-            height = shape.height
+        if slide_name in slide_dict:
+            tempo_dict = slide_dict[slide_name]
+            break
+
+    if tempo_dict is None:
+        return
+
+    normalized_map = {normalize_placeholder(k): v for k, v in tempo_dict.items()}
+
+    for shape in list(shapes):
+        shape_name = normalize_placeholder(shape.name.lower())
+
+        if "image" in shape_name:
+            if shape.name in tempo_dict:
+                image_path = os.path.join(folder_path, tempo_dict[shape.name])
+            elif normalize_placeholder(shape.name) in normalized_map:
+                image_path = os.path.join(folder_path, normalized_map[normalize_placeholder(shape.name)])
+            else:
+                continue
+
+            left, top, width, height = shape.left, shape.top, shape.width, shape.height
             sp = shape._element
             sp.getparent().remove(sp)
-
             shapes.add_picture(image_path, left, top, width=width, height=height)
-            
+            continue
+
+        if "qr_code" in shape_name:
+            qr_path = os.path.join(folder_path, "qr_code.png")
+            left, top, width, height = shape.left, shape.top, shape.width, shape.height
+            sp = shape._element
+            sp.getparent().remove(sp)
+            shapes.add_picture(qr_path, left, top, width=width, height=height)
+            continue
+
         if shape.shape_type == MSO_SHAPE_TYPE.GROUP:
-            recursive_replace(shape.shapes,ai_response,slide_name,folder_path)
+            recursive_replace(shape.shapes, ai_response, slide_name, folder_path)
+            continue
+
         if shape.has_text_frame:
             for paragraph in shape.text_frame.paragraphs:
-                clean_text = paragraph.text.strip()
+                clean_text = normalize_placeholder(paragraph.text)
                 if clean_text.startswith("{{") and clean_text.endswith("}}"):
-                    paragraph.text=tempo_dict[clean_text]
-    
-
-            
-
+                    if len(paragraph.runs) == 1 and clean_text in normalized_map:
+                        paragraph.runs[0].text = str(normalized_map[clean_text])
+                        
 def replace_placeholder_text(slides_path,ai_response,file_path):
     powerpoint_file_path=[]
     for i,path in enumerate(slides_path):
@@ -182,7 +207,7 @@ def summarize(link,slides_path):
             filenames_text = "\n".join(f"{i+1}. {fn}" for i, fn in enumerate(files_names))
             
             json_summarization=json.dumps(summarization[:-1])
-            print(json_summarization)
+            
             agent_2_response=ollama.chat(
                 model=qwen_35,
                 messages=[{
@@ -206,7 +231,6 @@ def generate_template(link,slides_path):
     
     try:
         raw_ai_text, file_path = summarize(link, slides_path)
-        print(raw_ai_text)
         start_idx = raw_ai_text.find('[')
         end_idx = raw_ai_text.rfind(']') + 1
         clean_list_string = raw_ai_text[start_idx:end_idx]
@@ -222,4 +246,4 @@ def generate_template(link,slides_path):
     except Exception as e :
         return e
 if __name__=="__main__":
-    print(generate_template("https://www.roboai.fi/en/news-en/apply-to-study-at-the-roboai-academy-2026/",["./template/testing_.pptx","./template/second_testing_template.pptx"]))
+    print(generate_template("https://www.roboai.fi/en/news-en/apply-to-study-at-the-roboai-academy-2026/",["./template/testing_.pptx","./template/second_testing_template.pptx","./template/template1.pptx"]))

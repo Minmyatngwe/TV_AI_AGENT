@@ -14,26 +14,46 @@ Important:
 - Use the exact slide names provided in the slide placeholder structure.
 - Use the exact placeholder keys provided for each slide.
 - If only one slide is provided, return only one slide object.
-- Use the exact placeholder keys provided for each slide.
 - The LAST element of the array must be a short, URL-friendly string (using underscores, no spaces) to be used as a folder name relevant to the topic.
 
 Rules:
 1. Use the same language as the input text.
 2. Use only information explicitly stated in the input text.
-3. Do not assume the text is a research project.
-4. If the text is a news article, summarize it accordingly.
+3. Do not assume missing facts.
+4. If the text is a news article, summarize it as news.
 5. Fill placeholders only from the webpage text.
 6. For title placeholders, use the actual headline from the text when available.
 7. For subtitle placeholders, use a short factual subtitle based only on the text.
-8. For description placeholders, provide a concise factual summary, maximum 3 sentences.
-9. Include concrete details such as dates, eligibility, and purpose if present.
-10. Do not invent or infer missing information.
-11. For any image placeholder, set the value exactly to null.
-12. If a placeholder cannot be filled from explicit text, set it to null.
-13. Include "language" only inside the first slide object.
-14. Output must be valid JSON only.
-15. Do not output markdown.
-16. Do not use line breaks inside JSON string values.
+8. For image placeholders, always return null.
+9. If a placeholder cannot be filled from explicit text, set it to null.
+10. Include "language" only inside the first slide object.
+11. Output must be valid JSON only.
+12. Do not output markdown.
+13. Do not use line breaks inside JSON string values.
+
+Layout-aware writing rules:
+- Every placeholder may contain hidden layout meaning in its key text.
+- You must infer expected text length from the placeholder key itself.
+- If the placeholder key mentions line count, row count, max rows, font size, max font size, lead paragraph, body text, short text, long text, or similar layout guidance, follow it strictly.
+- Bigger font size means shorter text.
+- Smaller font size allows longer text.
+- A large-font 2-line placeholder should usually contain much less text than a normal-font 4-line placeholder.
+- Never exceed the likely visible capacity implied by the placeholder.
+- Write text that would realistically fit inside the intended design area.
+- Prefer compressed factual wording over full prose when space is tight.
+- When a placeholder appears to be headline text, keep it especially short.
+- When a placeholder appears to be supporting/body text, provide more detail only if the implied space allows it.
+- If a placeholder explicitly says maximum 2 lines, 3 lines, 4 rows, 5 rows, or similar, do not exceed that.
+- If a placeholder explicitly includes a font size, use that to estimate text density:
+  - very large font → very short text
+  - medium font → short text
+  - smaller font → more detailed text
+- Balance readability, fit, and factual accuracy.
+- All output must be strict valid JSON.
+- Escape any double quotes inside keys or values.
+- Preserve placeholder keys exactly as given.
+- Return one separate object per slide in the array.
+- Never merge multiple slide dictionaries into one object.
 
 Slide placeholder structure:
 {slide_placeholder}
@@ -52,6 +72,7 @@ Required output pattern:
 
 Return exactly one object per input slide. No more, no less.
 """
+
 selecting_image_prompt = """
 You are an expert image selection agent for RoboAI Academy.
 
