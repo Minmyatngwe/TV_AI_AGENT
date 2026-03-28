@@ -1,0 +1,114 @@
+/* Background */
+.stApp {
+    background: #111827;
+}
+
+/* Container width */
+.block-container {
+    max-width: 900px;
+    padding-top: 3rem;
+    padding-bottom: 3rem;
+}
+
+/* Title */
+.hero-title {
+    padding-top: 100px;
+    font-size: 3rem;
+    font-weight: 800;
+    text-align: center;
+    color: #ffffff;
+}
+
+/* Subtitle */
+.hero-subtitle {
+    text-align: center;
+    color: #6b7280;
+    margin-bottom: 2rem;
+}
+
+/* Tabs */
+button[data-baseweb="tab"] {
+    background: #111827;
+    padding: 14px 20px;
+    border-radius: 10px;
+    font-weight: 600;
+    color: white;
+}
+
+button[data-baseweb="tab"][aria-selected="true"] {
+    background: #0b0ef1;
+    color: white;
+}
+
+/* Form */
+div[data-testid="stForm"] {
+    max-width: 650px;
+    margin: 60px auto 0 auto;
+    background: #1f2937;
+    border: 1px solid #374151;
+    border-radius: 16px;
+    padding: 36px;
+    min-height: 260px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.35);
+}
+
+/* Input wrapper */
+div[data-testid="stTextInput"] {
+    margin-bottom: 12px;
+}
+
+/* Input */
+div[data-testid="stTextInput"] input {
+    height: 52px;
+    background: #111827;
+    border-radius: 12px;
+    padding-bottom: 25px;
+    color: white;
+    font-size: 16px;
+    box-sizing: border-box;
+}
+
+/* Input focus */
+div[data-testid="stTextInput"] input:focus {
+    outline: none;
+    box-shadow: none;
+    /*border: 2px solid #4b5563;*/
+}
+
+/* Hide helper text like "Press Enter to submit form" */
+div[data-testid="stForm"] small {
+    display: none;
+}
+
+/* File Uploader */
+div[data-testid="stFileUploader"] {
+    min-height: 90px;
+    border: 1px dashed #4b5563;
+    border-radius: 12px;
+    padding: 10px;
+    background: #111827;
+    margin-bottom: 12px;
+}
+
+/* Button */
+div[data-testid="stFormSubmitButton"]>button {
+    background: #f5071b;
+    color: white;
+    border-radius: 12px;
+    height: 50px;
+    font-weight: bold;
+    border: none;
+}
+
+/* Button hover */
+div[data-testid="stFormSubmitButton"]>button:hover {
+    background: #d90416;
+    color: white;
+}
+
+/* Keep forms visually similar */
+div[data-testid="stForm"]>div {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
