@@ -14,6 +14,8 @@ Important:
 - Use the exact slide names provided in the slide placeholder structure.
 - Use the exact placeholder keys provided for each slide.
 - If only one slide is provided, return only one slide object.
+- Use the exact placeholder keys provided for each slide.
+- The LAST element of the array must be a short, URL-friendly string (using underscores, no spaces) to be used as a folder name relevant to the topic.
 
 Rules:
 1. Use the same language as the input text.
@@ -44,7 +46,8 @@ Required output pattern:
       "EXACT_IMAGE_PLACEHOLDER_FROM_INPUT": null,
       "language": "input language only for first slide"
     }}
-  }}
+  }},
+  "short_relevant_folder_name"
 ]
 
 Return exactly one object per input slide. No more, no less.
@@ -54,14 +57,40 @@ You are an expert image selection agent for RoboAI Academy.
 
 Task:
 You will receive:
-1. A topic summary (provided below)
-2. 2–5 candidate images with file names
+1. A list
+2. Candidate images with file names
 
-Select the ONE image that best represents the FULL topic.
+The list may contain:
+- One or more slide template dictionaries
+- Text values
+- Image placeholder fields whose value is null
+- A final topic string
 
-Priority (most important → least):
+Your job:
+- Examine the candidate images
+- Choose the most suitable image for each image placeholder
+- Replace only the null image placeholder value(s) with the selected image file name(s)
+
+STRICT PRESERVATION RULE:
+You must return the input list EXACTLY as received.
+Do not rewrite it.
+Do not reformat it.
+Do not reorder anything.
+Do not rename keys.
+Do not change any text.
+Do not change capitalization.
+Do not change punctuation.
+Do not change spacing style.
+Do not remove anything.
+Do not add anything.
+
+ONLY ALLOWED CHANGE:
+- If a value is an image placeholder and its value is null, replace that null with the selected image file name
+- Nothing else may be changed
+
+Image selection priority (most important → least):
 1. Overall relevance to the full topic
-2. Visibility of the core subject of the topic
+2. Visibility of the core subject
 3. Match with the real-world context described
 4. Educational/professional suitability
 5. Clarity and quality
@@ -69,26 +98,38 @@ Priority (most important → least):
 Important rules:
 - Do NOT choose an image just because it contains people, a classroom, or a screen
 - Do NOT prefer an image just because a robot is visible
-- Prefer the image that best represents the main subject of the summary
-- If the summary is about robotics, AI, exoskeletons, machines, or technology demos, the technology/demo must be clearly visible
-- Images showing only audience members, presentation screens, or distant event views should be avoided unless they clearly represent the main topic better than all other options
-- Strongly avoid blurry, low-resolution, heavily cropped, dark, or unclear images
-- If two images are similarly relevant, ALWAYS choose the clearer and more visually informative one
-- Prefer hands-on interaction, demonstrations, or visible equipment over generic crowd scenes
+- Prefer the image that best represents the main subject of the topic
+- If the topic is about robotics, AI, exoskeletons, machines, or technology demos, the technology/demo must be clearly visible
+- Avoid audience-only images, presentation screens, distant event views, and generic crowd scenes unless they clearly represent the topic better than all others
+- Strongly avoid blurry, low-resolution, dark, heavily cropped, or unclear images
+- If two images are similarly relevant, choose the clearer and more visually informative one
+- Prefer hands-on interaction, demonstrations, or visible equipment over generic scenes
 - Avoid generic or misleading visuals
-- Focus on the full topic, not one weak clue from the scene
 
-🚫 CRITICAL - AVOID THESE:
-- EU flags, funding logos, sponsor banners, institutional emblems
-- Presentation slides, title screens, or text-heavy graphics
-- Generic crowd shots where the activity isn't visible
-- Images where branding/logos dominate the frame
+Multiple placeholder rules:
+- If one slide has more than one image placeholder, use different images when possible
+- If there are more placeholders than suitable distinct images, duplication is allowed
+
+Avoid these whenever possible:
+- EU flags
+- Funding logos
+- Sponsor banners
+- Institutional emblems
+- Presentation slides
+- Title screens
+- Text-heavy graphics
+- Branding-dominated images
 
 Output rules:
-- Return ONLY the file name
-- No explanation
-- No extra text
-""" 
+- Return only the final list
+- Return the full list, not a summary
+- The returned list must be exactly the same as the input list except for replacing null image placeholder values with file names
+- Do not add explanations
+- Do not add notes
+- Do not add markdown
+- Do not add code fences
+- Do not add any extra text
+"""
 
 defining_layout_prompt = """### SYSTEM ROLE
 You are a Senior Frontend Engineer specialized in premium fixed-slide HTML composition.
