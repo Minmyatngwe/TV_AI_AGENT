@@ -211,6 +211,12 @@ div[data-testid="stFormSubmitButton"]>button:hover {
 .layout-title {
     font-size: 1.8rem;
     font-weight: 700;
-    color: #ffffff;
-    margin-bottom: 16px;
+    color: white;
+    padding-bottom: 12px;
+    margin-bottom: 20px;
+}
+
+button[kind="secondary"] {
+    border-radius: 10px;
+    background: #1f2937;
 }

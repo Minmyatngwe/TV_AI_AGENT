@@ -19,6 +19,7 @@ pg = st.navigation([
     st.Page("pages/customize.py", title="Customize", icon=":material/brush:"),
     st.Page("pages/tvdisplay.py", title="TV Display", icon=":material/tv:"),
     st.Page("pages/library.py", title="Library", icon=":material/library_books:"),
+    st.Page("pages/layout_preview.py", title="Layout Preview", icon=":material/preview:"),
 ])
 
 pg.run()
