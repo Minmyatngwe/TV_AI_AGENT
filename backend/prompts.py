@@ -127,9 +127,13 @@ Important rules:
 - Prefer hands-on interaction, demonstrations, or visible equipment over generic scenes
 - Avoid generic or misleading visuals
 
-Multiple placeholder rules:
-- If one slide has more than one image placeholder, use different images when possible
-- If there are more placeholders than suitable distinct images, duplication is allowed
+Image reuse rules:
+- You ARE allowed to use the same image for multiple different slides
+- If the same image is the best match for 2 or more slides, reuse it
+- Do NOT force different images across different slides
+- Choose independently for each slide based on relevance
+- However, inside a SINGLE slide, if that slide has more than one image placeholder, do NOT use the same image twice when different suitable images are available
+- Only if a single slide has more image placeholders than suitable distinct images, duplication inside that same slide is allowed
 
 Avoid these whenever possible:
 - EU flags
@@ -150,7 +154,13 @@ Output rules:
 - Do not add markdown
 - Do not add code fences
 - Do not add any extra text
-"""
+
+Critical behavior clarification:
+- Different slides may receive the same image file name
+- One slide with multiple image placeholders should use different image file names when possible
+- Do not try to maximize image variety across slides
+- Maximize relevance, not diversity
+""" 
 
 defining_layout_prompt = """### SYSTEM ROLE
 You are a Senior Frontend Engineer specialized in premium fixed-slide HTML composition.

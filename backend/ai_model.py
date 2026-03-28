@@ -17,8 +17,8 @@ import ollama
 from pptx import Presentation
 from pptx.enum.shapes import MSO_SHAPE_TYPE 
 import ast 
-
-
+import subprocess
+from pdf2image import convert_from_path
 summarize_template=ChatPromptTemplate(
     [
         ("system",summarize_prompt),
@@ -27,8 +27,7 @@ summarize_template=ChatPromptTemplate(
 )
 
 ollama_model_text="qwen3.5:9b"
-ollama_model_vl="qwen3-vl:9b"
-deepseek_r1="hengwen/DeepSeek-R1-Distill-Qwen-32B:q4_k_m"
+ollama_model_vl="qwen3-vl:30b"
 
 qwen_35="qwen3.5:35b"
 
@@ -161,9 +160,40 @@ def replace_placeholder_text(slides_path,ai_response,file_path):
         
         
         
+
+def convert_pptx_to_png(pptx_path):
+    output_path=os.path.dirname(os.path.dirname(pptx_path))
+    pdf_path = os.path.join(output_path, "pdf_files")
+    os.makedirs(pdf_path, exist_ok=True)    
+    base_name = os.path.splitext(os.path.basename(pptx_path))[0]   
+    try:
+        subprocess.run([
+            "libreoffice", 
+            "--headless", 
+            "--convert-to", "pdf", 
+            "--outdir", pdf_path, 
+            pptx_path
+        ], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    except subprocess.CalledProcessError as e:
+        print(f"Error rendering PDF: {e}")
+        return []    
+    pdf_file_path=os.path.join(pdf_path,f"{base_name}.pdf")
+    try:
+        images = convert_from_path(pdf_file_path, dpi=300)
+    except Exception as e:
+        print(f"Error converting PDF to images: {e}")
+        return []
+    
+    image_path = os.path.join(output_path, "image")
+    os.makedirs(image_path, exist_ok=True)    
+    for i, image in enumerate(images):
+        png_filename = f"{base_name}_{i}.png"
+        png_full_path = os.path.join(image_path, png_filename)
         
+        image.save(png_full_path, "PNG")
+        print(f"Saved: {png_filename}")
             
-            
+    return png_full_path
 def summarize(link,slides_path):
         global summarize_chain
         response=requests.get(link)
@@ -204,7 +234,7 @@ def summarize(link,slides_path):
                         multi_images.append(full_path)
                         files_names.append(i)
 
-            filenames_text = "\n".join(f"{i+1}. {fn}" for i, fn in enumerate(files_names))
+            filenames_text = "\n".join(f"{i+1}. {fn}" for i, fn in enumerate(files_names[:5]))
             
             json_summarization=json.dumps(summarization[:-1])
             
@@ -214,7 +244,7 @@ def summarize(link,slides_path):
                     "role":"system","content":selecting_image_prompt
                 },
                 {
-                    "role":"user","content":f"Topic: {json_summarization}\n\nSelect the best image. Return ONLY the filename. Here is file name {filenames_text}", "images": multi_images
+                    "role":"user","content": f"Input list: {json_summarization}\n\nCandidate image file names:\n{filenames_text}\n\nReturn the full updated JSON list only.", "images": multi_images[:5]
                 }]
             )
             qr_image=qrcode.make(link)
@@ -241,9 +271,14 @@ def generate_template(link,slides_path):
         print("Folder Path:", file_path)        
         print(ai_response)
         powerpoint_paths=replace_placeholder_text(slides_path,ai_response,file_path)
-        return file_path,powerpoint_paths
+        
+        png_image_path=[]
+        for i in powerpoint_paths:
+            png_path=convert_pptx_to_png(i)
+            png_image_path.append(png_path)
+        return file_path,powerpoint_paths,png_image_path
 
     except Exception as e :
         return e
 if __name__=="__main__":
-    print(generate_template("https://www.roboai.fi/en/news-en/apply-to-study-at-the-roboai-academy-2026/",["./template/testing_.pptx","./template/second_testing_template.pptx","./template/template1.pptx"]))
+    print(generate_template("https://www.roboai.fi/en/we-research-en/we-research-gerotestbed-model-supporting-the-development-of-agetechnologies/",["./template/testing_.pptx","./template/second_testing_template.pptx","./template/template1.pptx"]))

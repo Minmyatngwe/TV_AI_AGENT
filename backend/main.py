@@ -13,6 +13,6 @@ class Template(BaseModel):
 
 @app.post("/generate")
 def generate(template:Template):
-    file_path,powerpoint_paths=generate_template(template.link,template.template_paths)
+    file_path,powerpoint_paths,png_image_path=generate_template(template.link,template.template_paths)
     
         
