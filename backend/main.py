@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from pydantic  import BaseModel
 from typing import List
 from ai_model import generate_template
-
+from cutomize_model import cutomize_template
 import os
 import subprocess
 from pdf2image import convert_from_path
@@ -20,7 +20,7 @@ class PATH(BaseModel):
 
 @app.post("/generate")
 def generate(template:Template):
-    file_path,powerpoint_paths,png_image_path=generate_template(template.link,template.template_paths)
+    file_path,powerpoint_paths,png_image_paths,web_text,placeholders=generate_template(template.link,template.template_paths)
 
 
 def convert_pptx_to_png(pptx_path):
@@ -61,4 +61,22 @@ def convert_pptx_to_png(pptx_path):
 def convert(path:PATH):
     convert_pptx_to_png(path.path)
     
+
+
+class CUTOMIZE(BaseModel):
     
+    web_text:str
+    prompt:str
+    placeholder:list[dict]
+    slide_path:str
+    file_path:str
+    
+@app.post("/cutomize")
+def cutomize_pptx(cutomize:CUTOMIZE):
+    cutomize_template(
+        web_text=cutomize.web_text,
+        prompt=cutomize.prompt,
+        placeholder=cutomize.placeholder,
+        slide_path=cutomize.slide_path,
+        file_path=cutomize.file_path
+    )

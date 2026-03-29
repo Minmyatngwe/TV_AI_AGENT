@@ -253,14 +253,14 @@ def summarize(link,slides_path):
             
             qr_image.save(qr_path)
 
-            return agent_2_response['message']['content'],full_folder_path
+            return agent_2_response['message']['content'],full_folder_path,text_clean
         except Exception as e:
             return e
 
 def generate_template(link,slides_path):
     
     try:
-        raw_ai_text, file_path = summarize(link, slides_path)
+        raw_ai_text, file_path,web_text = summarize(link, slides_path)
         start_idx = raw_ai_text.find('[')
         end_idx = raw_ai_text.rfind(']') + 1
         clean_list_string = raw_ai_text[start_idx:end_idx]
@@ -276,7 +276,7 @@ def generate_template(link,slides_path):
         for i in powerpoint_paths:
             png_path=convert_pptx_to_png(i)
             png_image_path.append(png_path)
-        return file_path,powerpoint_paths,png_image_path
+        return file_path,powerpoint_paths,png_image_path,web_text,ai_response
 
     except Exception as e :
         return e
