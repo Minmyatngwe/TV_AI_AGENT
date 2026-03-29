@@ -1,30 +1,113 @@
 import streamlit as st
-from pathlib import Path
+import requests
 
-st.title("Customize Layout")
+BACKEND_URL = "http://127.0.0.1:8000"
 
-result = st.session_state.get("generated_result")
+st.markdown('<div class="hero-title">Customize Layouts</div>', unsafe_allow_html=True)
+st.markdown(
+    '<div class="hero-subtitle">Review and customize the generated layouts</div>',
+    unsafe_allow_html=True
+)
 
-if not result:
-    st.warning("No generated layout found. Please generate first.")
+generated_result = st.session_state.get("generated_result")
+file_path = st.session_state.get("generated_file_path")
+powerpoint_paths = st.session_state.get("generated_powerpoint_paths", [])
+png_image_paths = st.session_state.get("generated_png_image_paths", [])
+web_text = st.session_state.get("generated_web_text", "")
+placeholders = st.session_state.get("generated_placeholders", [])
+
+if not generated_result:
+    st.warning("No generated layout data found. Please generate layouts first.")
+    if st.button("Go to Home", type="primary"):
+        st.switch_page("pages/home.py")
     st.stop()
 
-file_path = result.get("file_path")
-powerpoint_paths = result.get("powerpoint_paths", [])
-png_image_path = result.get("png_image_path")
+st.write("### Generated Layout Previews")
 
-st.write("### Generated Output")
-st.write("**Folder Path:**", file_path)
-st.write("**PowerPoint Files:**", powerpoint_paths)
-st.write("**Preview Image Path:**", png_image_path)
+if png_image_paths:
+    cols = st.columns(2)
+    for i, image_path in enumerate(png_image_paths):
+        with cols[i % 2]:
+            st.image(image_path, caption=f"Layout {i+1}", use_container_width=True)
+else:
+    st.info("No preview images found.")
 
-if png_image_path:
-    try:
-        st.image(png_image_path, caption="Generated Layout Preview", use_container_width=True)
-    except Exception as e:
-        st.error(f"Could not load preview image: {e}")
-
+st.write("### Generated PowerPoint Files")
 if powerpoint_paths:
-    st.write("### Generated PowerPoints")
     for ppt in powerpoint_paths:
-        st.write(ppt)
+        st.code(ppt)
+else:
+    st.info("No generated PowerPoint files found.")
+
+st.write("### Source Web Text")
+if web_text:
+    with st.expander("Show extracted web text"):
+        st.write(web_text)
+
+st.write("### Placeholder Data")
+if placeholders:
+    st.json(placeholders)
+else:
+    st.info("No placeholder data found.")
+
+
+st.write("### Customize Content")
+
+custom_prompt = st.text_area(
+    "Enter customization prompt",
+    placeholder="Example: Make the title shorter and more modern. Replace the image with a more technical one.",
+    height=120
+)
+
+selected_slide_path = None
+if powerpoint_paths:
+    selected_slide_path = st.selectbox(
+        "Choose PowerPoint to customize",
+        options=powerpoint_paths
+    )
+
+if st.button("Apply Customization", type="primary", use_container_width=True):
+    if not custom_prompt.strip():
+        st.warning("Please enter a customization prompt.")
+        st.stop()
+
+    if not selected_slide_path:
+        st.warning("No PowerPoint file selected.")
+        st.stop()
+
+    try:
+        payload = {
+            "web_text": web_text,
+            "prompt": custom_prompt,
+            "placeholder": placeholders,
+            "slide_path": selected_slide_path,
+            "file_path": file_path
+        }
+
+        with st.spinner("Applying customization..."):
+            response = requests.post(
+                f"{BACKEND_URL}/customize",
+                json=payload,
+                timeout=300
+            )
+
+        if response.status_code != 200:
+            st.error(f"Backend error {response.status_code}")
+            st.code(response.text)
+            st.stop()
+
+        customize_result = response.json()
+        st.session_state["customize_result"] = customize_result
+
+        st.success("Customization complete.")
+
+    except requests.exceptions.Timeout:
+        st.error("Customization request timed out.")
+    except requests.exceptions.RequestException as e:
+        st.error(f"Request failed: {e}")
+    except Exception as e:
+        st.error(f"Unexpected error: {e}")
+
+
+if st.button("Back to Home", type="secondary"):
+    st.switch_page("pages/home.py")

@@ -15,7 +15,7 @@ def load_existing_templates():
 
     if not TEMPLATE_SAVE_DIR.exists():
         return templates
-    
+
     for file_path in TEMPLATE_SAVE_DIR.iterdir():
         if file_path.is_file() and file_path.suffix.lower() in allowed_exts:
             templates.append({
@@ -23,7 +23,7 @@ def load_existing_templates():
                 "path": str(file_path),
                 "type": file_path.suffix.lower()
             })
-        
+
     image_dir = TEMPLATE_SAVE_DIR / "image"
     if image_dir.exists() and image_dir.is_dir():
         for file_path in image_dir.iterdir():
@@ -45,11 +45,31 @@ def save_uploaded_template(uploaded_file):
     return str(save_path)
 
 
+# session state defaults
 if "current_template_paths" not in st.session_state:
     st.session_state["current_template_paths"] = []
 
 if "selected_layout" not in st.session_state:
     st.session_state["selected_layout"] = None
+
+if "generated_result" not in st.session_state:
+    st.session_state["generated_result"] = None
+
+if "generated_file_path" not in st.session_state:
+    st.session_state["generated_file_path"] = None
+
+if "generated_powerpoint_paths" not in st.session_state:
+    st.session_state["generated_powerpoint_paths"] = []
+
+if "generated_png_image_paths" not in st.session_state:
+    st.session_state["generated_png_image_paths"] = []
+
+if "generated_web_text" not in st.session_state:
+    st.session_state["generated_web_text"] = ""
+
+if "generated_placeholders" not in st.session_state:
+    st.session_state["generated_placeholders"] = []
+
 
 st.markdown('<div class="hero-title">Generate Layouts</div>', unsafe_allow_html=True)
 st.markdown(
@@ -110,7 +130,11 @@ with left_col:
             step=1
         )
 
-        generate_clicked = st.button("Generate Layouts", use_container_width=True, type="primary")
+        generate_clicked = st.button(
+            "Generate Layouts",
+            use_container_width=True,
+            type="primary"
+        )
 
         if generate_clicked:
             if not website_url.strip():
@@ -150,6 +174,9 @@ with left_col:
                     "layout_count": int(layout_count)
                 }
 
+                status_box = st.empty()
+                status_box.info("Sending request to backend...")
+
                 with st.spinner("Generating layouts... Please wait..."):
                     response = requests.post(
                         f"{BACKEND_URL}/generate",
@@ -158,18 +185,24 @@ with left_col:
                     )
 
                 if response.status_code != 200:
+                    status_box.error("Generation failed.")
                     st.error(f"Backend error {response.status_code}")
                     st.code(response.text)
                     st.stop()
 
                 result = response.json()
 
+                # save everything frontend needs
                 st.session_state["generated_result"] = result
                 st.session_state["generated_from_url"] = website_url
                 st.session_state["generated_file_path"] = result.get("file_path")
                 st.session_state["generated_powerpoint_paths"] = result.get("powerpoint_paths", [])
-                st.session_state["generated_png_image_path"] = result.get("png_image_path")
+                st.session_state["generated_png_image_paths"] = result.get("png_image_paths", [])
+                st.session_state["generated_web_text"] = result.get("web_text", "")
+                st.session_state["generated_placeholders"] = result.get("placeholders", [])
                 st.session_state["layout_count"] = int(layout_count)
+
+                status_box.success("Generation complete. Redirecting to customize page...")
 
                 st.switch_page("pages/customize.py")
 
@@ -181,35 +214,8 @@ with left_col:
                 st.error(f"Unexpected error: {e}")
 
     with tab2:
-        with st.form("file_form"):
-            st.markdown("#### Generate from File")
-            st.caption("This tab is UI-only for now. The current backend /generate endpoint requires a link and template_paths.")
-
-            uploaded_file = st.file_uploader(
-                "Upload source file",
-                type=["pdf", "docx", "txt", "png", "jpg", "jpeg"],
-                key="source_file"
-            )
-
-            reference_file_upload = st.file_uploader(
-                "Upload reference layout image",
-                type=["png", "jpg", "jpeg"],
-                key="reference_file_upload"
-            )
-
-            file_submit = st.form_submit_button(
-                "Generate Layouts",
-                use_container_width=True
-            )
-
-        if file_submit:
-            if uploaded_file is None:
-                st.warning("Please upload a source file.")
-            else:
-                if reference_file_upload is not None:
-                    st.success(f"File captured: {uploaded_file.name} | Reference image: {reference_file_upload.name}")
-                else:
-                    st.success(f"File captured: {uploaded_file.name}")
+        st.markdown("#### Generate from File")
+        st.caption("This tab is UI-only for now.")
 
 with right_col:
     st.markdown('<div class="layout-title">Current Layouts</div>', unsafe_allow_html=True)
@@ -235,7 +241,7 @@ with right_col:
                     st.switch_page("pages/layout_preview.py")
 
             with row2:
-                if st.button("Delete", key=f"delete_{i}", use_container_width=True):
+                if st.button("Delete", key=f"delete_{i}", use_container_width=True, type="secondary"):
                     try:
                         os.remove(layout["path"])
 
