@@ -9,51 +9,75 @@ You will receive:
 Your job is to return a strict JSON array with exactly the same number of slides as provided in the slide placeholder structure.
 
 Important:
-- Do NOT create extra slides.
-- Do NOT rename slides.
-- Use the exact slide names provided in the slide placeholder structure.
-- Use the exact placeholder keys provided for each slide.
-- If only one slide is provided, return only one slide object.
-- The LAST element of the array must be a short, URL-friendly string (using underscores, no spaces) to be used as a folder name relevant to the topic.
+- Do NOT create extra slides
+- Do NOT rename slides
+- Use the exact slide names provided in the slide placeholder structure
+- Use the exact placeholder keys provided for each slide
+- If only one slide is provided, return only one slide object
+- The LAST element of the array must be a short, URL-friendly string (using underscores, no spaces)
 
-Rules:
-1. Use the same language as the input text.
-2. Use only information explicitly stated in the input text.
-3. Do not assume missing facts.
-4. If the text is a news article, summarize it as news.
-5. Fill placeholders only from the webpage text.
-6. For title placeholders, use the actual headline from the text when available.
-7. For subtitle placeholders, use a short factual subtitle based only on the text.
-8. For image placeholders, always return null.
-9. If a placeholder cannot be filled from explicit text, set it to null.
-10. Include "language" only inside the first slide object.
-11. Output must be valid JSON only.
-12. Do not output markdown.
-13. Do not use line breaks inside JSON string values.
+Core Rules:
+1. Use the same language as the input text
+2. Use only information explicitly stated in the input text
+3. Do not assume missing facts
+4. If the text is a news article, summarize it as news
+5. Fill placeholders only from the webpage text
+6. For image placeholders, always return null
+7. If a placeholder cannot be filled from explicit text, set it to null
+8. Include "language" only inside the first slide object
+9. Output must be valid JSON only
+10. Do not output markdown
+11. Do not use line breaks inside JSON string values
 
-Layout-aware writing rules:
-- Every placeholder may contain hidden layout meaning in its key text.
-- You must infer expected text length from the placeholder key itself.
-- If the placeholder key mentions line count, row count, max rows, font size, max font size, lead paragraph, body text, short text, long text, or similar layout guidance, follow it strictly.
-- Bigger font size means shorter text.
-- Smaller font size allows longer text.
-- A large-font 2-line placeholder should usually contain much less text than a normal-font 4-line placeholder.
-- Never exceed the likely visible capacity implied by the placeholder.
-- Write text that would realistically fit inside the intended design area.
-- Prefer compressed factual wording over full prose when space is tight.
-- When a placeholder appears to be headline text, keep it especially short.
-- When a placeholder appears to be supporting/body text, provide more detail only if the implied space allows it.
-- If a placeholder explicitly says maximum 2 lines, 3 lines, 4 rows, 5 rows, or similar, do not exceed that.
-- If a placeholder explicitly includes a font size, use that to estimate text density:
-  - very large font → very short text
-  - medium font → short text
-  - smaller font → more detailed text
-- Balance readability, fit, and factual accuracy.
-- All output must be strict valid JSON.
-- Escape any double quotes inside keys or values.
-- Preserve placeholder keys exactly as given.
-- Return one separate object per slide in the array.
-- Never merge multiple slide dictionaries into one object.
+CRITICAL LAYOUT RULES (MANDATORY):
+- Layout constraints override all other rules, including copying the full headline
+- You MUST strictly follow font size and row/line limits in placeholder keys
+- NEVER exceed the visual capacity implied by the placeholder
+
+Interpretation rules:
+- Larger font size → much shorter text
+- Smaller font size → more text allowed
+- Fewer rows → shorter text
+- More rows → more detail allowed
+
+STRICT TEXT LIMIT GUIDELINES:
+- Font size ≥ 60 (e.g. Title 70, max 2 rows):
+  → Maximum 3–6 words
+  → NEVER use full long headline
+  → MUST shorten aggressively while keeping meaning
+
+- Font size ~30–40 (e.g. Lead paragraph max 34, 4 rows):
+  → 1–2 short sentences
+  → Keep concise and readable
+
+- Font size ≤ 25 (body / more information, 5 rows):
+  → Allow more detail
+  → Max 2–3 short sentences
+
+TITLE RULE (UPDATED):
+- Use the original headline ONLY if it fits the layout
+- If too long, shorten it while preserving core meaning
+- NEVER overflow placeholder constraints
+
+WRITING STYLE:
+- Prefer short, dense, factual phrasing
+- Avoid unnecessary words
+- Prioritize readability and visual fit over completeness
+- Do NOT try to include all information if space is limited
+
+PLACEHOLDER INTERPRETATION:
+- Infer meaning from placeholder key text:
+  - "Title" → very short headline
+  - "Subtitle" → short factual phrase
+  - "Lead paragraph" → short explanation
+  - "More information" → compact detailed summary
+  - "Label" → 1–2 words
+  - "Call out text" → very short CTA (1–4 words)
+
+STRUCTURE RULES:
+- Preserve placeholder keys EXACTLY
+- Return one separate object per slide
+- Never merge slide objects
 
 Slide placeholder structure:
 {slide_placeholder}

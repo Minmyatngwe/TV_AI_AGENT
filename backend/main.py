@@ -22,6 +22,13 @@ class PATH(BaseModel):
 def generate(template:Template):
     file_path,powerpoint_paths,png_image_paths,web_text,placeholders=generate_template(template.link,template.template_paths)
 
+    return {
+        "file_path":file_path,
+        "powerpoint_paths":powerpoint_paths,
+        "png_image_paths":png_image_paths,
+        "web_text":web_text,
+        "placeholders":placeholders
+    }
 
 def convert_pptx_to_png(pptx_path):
     output_path=os.path.dirname(pptx_path)
