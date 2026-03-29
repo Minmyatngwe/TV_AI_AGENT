@@ -3,31 +3,38 @@ from pathlib import Path
 import requests
 import streamlit as st
 
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
 BACKEND_URL = "http://127.0.0.1:8000"
-
-TEMPLATE_SAVE_DIR = "../backend/template"
+TEMPLATE_SAVE_DIR = PROJECT_ROOT / "backend" / "template"
+TEMPLATE_SAVE_DIR.mkdir(parents=True, exist_ok=True)
 
 
 def load_existing_templates():
     templates = []
     allowed_exts = {".pptx", ".png", ".jpg", ".jpeg", ".webp"}
-        
-    png_path=os.path.join(TEMPLATE_SAVE_DIR,"image")
-    for image in os.listdir(png_path):
-        base_name=os.path.splitext(image)[0]
-        tempo_path=os.path.join(png_path,image)
-        print(tempo_path)
-        extension=os.path.splitext(image)[-1]
-        
-        if extension.lower() in allowed_exts:
+
+    if not TEMPLATE_SAVE_DIR.exists():
+        return templates
+    
+    for file_path in TEMPLATE_SAVE_DIR.iterdir():
+        if file_path.is_file() and file_path.suffix.lower() in allowed_exts:
             templates.append({
-                "name": base_name,
-                "path": tempo_path,
-                "type": extension.lower()
+                "name": file_path.stem,
+                "path": str(file_path),
+                "type": file_path.suffix.lower()
             })
+        
+    image_dir = TEMPLATE_SAVE_DIR / "image"
+    if image_dir.exists() and image_dir.is_dir():
+        for file_path in image_dir.iterdir():
+            if file_path.is_file() and file_path.suffix.lower() in allowed_exts:
+                templates.append({
+                    "name": file_path.stem,
+                    "path": str(file_path),
+                    "type": file_path.suffix.lower()
+                })
 
     templates.sort(key=lambda x: x["name"].lower())
-    print(templates)
     return templates
 
 
