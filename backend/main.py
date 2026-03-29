@@ -49,7 +49,7 @@ def convert_pptx_to_png(pptx_path):
     image_path = os.path.join(output_path, "image")
     os.makedirs(image_path, exist_ok=True)    
     for i, image in enumerate(images):
-        png_filename = f"{base_name}_{i}.png"
+        png_filename = f"{base_name}.png"
         png_full_path = os.path.join(image_path, png_filename)
         
         image.save(png_full_path, "PNG")
