@@ -5,26 +5,29 @@ import streamlit as st
 
 BACKEND_URL = "http://127.0.0.1:8000"
 
-TEMPLATE_SAVE_DIR = Path("/home/user/persistent/TV_AI_AGENT/backend/template")
-TEMPLATE_SAVE_DIR.mkdir(parents=True, exist_ok=True)
+TEMPLATE_SAVE_DIR = "../backend/template"
 
 
 def load_existing_templates():
-    if not TEMPLATE_SAVE_DIR.exists():
-        return []
-
     templates = []
     allowed_exts = {".pptx", ".png", ".jpg", ".jpeg", ".webp"}
-
-    for file_path in TEMPLATE_SAVE_DIR.iterdir():
-        if file_path.is_file() and file_path.suffix.lower() in allowed_exts:
+        
+    png_path=os.path.join(TEMPLATE_SAVE_DIR,"image")
+    for image in os.listdir(png_path):
+        base_name=os.path.splitext(image)[0]
+        tempo_path=os.path.join(png_path,image)
+        print(tempo_path)
+        extension=os.path.splitext(image)[-1]
+        
+        if extension.lower() in allowed_exts:
             templates.append({
-                "name": file_path.name,
-                "path": str(file_path),
-                "type": file_path.suffix.lower()
+                "name": base_name,
+                "path": tempo_path,
+                "type": extension.lower()
             })
 
     templates.sort(key=lambda x: x["name"].lower())
+    print(templates)
     return templates
 
 
