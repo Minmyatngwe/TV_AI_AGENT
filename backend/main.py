@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from pydantic  import BaseModel
 from typing import List
 from ai_model import generate_template
-from cutomize_model import cutomize_template
+from customize_model import customize_template
 import os
 import subprocess
 from pdf2image import convert_from_path

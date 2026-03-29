@@ -1,5 +1,5 @@
 
-from langchain_core.prompt import ChatPromptTemplate
+from langchain_core.prompts import ChatPromptTemplate
 from prompts import customize
 from langchain_ollama import ChatOllama
 import json
@@ -12,13 +12,13 @@ cutomize_prompt=ChatPromptTemplate(
 )
 model=ChatOllama(model="qwen3.5:35b")
 cutomize_chain=cutomize_prompt|model
-def cutomize_template(web_text,prompt,placeholder,slide_path,file_path):
+def customize_template(web_text,prompt,placeholder,slide_path,file_path):
     global cutomize_chain
     
     ai_response=cutomize_chain.invoke(
         {"web_text":web_text,
          "input":placeholder,
-         "prompt",prompt
+         "prompt":prompt
         }
     )
     ai_response=json.load(ai_response.content)
