@@ -193,20 +193,38 @@ div[data-testid="stFileUploader"] {
     margin-bottom: 16px;
 }
 
-/* Button */
-div[data-testid="stFormSubmitButton"]>button {
-    background: #f5071b;
-    color: white;
-    border-radius: 12px;
-    height: 52px;
-    font-weight: bold;
-    border: none;
+/* Generate button only */
+button[kind="primary"] {
+    background: #f5071b !important;
+    color: white !important;
+    border-radius: 12px !important;
+    height: 52px !important;
+    font-weight: bold !important;
+    border: none !important;
 }
 
-div[data-testid="stFormSubmitButton"]>button:hover {
+button[kind="primary"]:hover {
+    background: #d90416 !important;
+    color: white !important;
+}
+
+/* Delete buttons */
+button[kind="secondary"] {
+    background: #1f2937 !important;
+    color: white !important;
+    border-radius: 10px !important;
+    border: 1px solid #374151 !important;
+}
+
+button[kind="secondary"]:hover {
+    background: #374151 !important;
+    color: white !important;
+}
+
+/* div[data-testid="stFormSubmitButton"]>button:hover {
     background: #d90416;
     color: white;
-}
+} */
 
 .layout-title {
     font-size: 1.8rem;

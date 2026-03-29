@@ -53,57 +53,122 @@ with left_col:
     tab1, tab2 = st.tabs(["URL", "File"])
 
     with tab1:
-        with st.form("url_form"):
-            st.markdown("#### Generate from URL")
+        st.markdown("#### Generate from URL")
 
-            website_url = st.text_input(
-                "Website URL",
-                placeholder="https://example.com"
-            )
+        website_url = st.text_input(
+            "Website URL",
+            placeholder="https://example.com"
+        )
 
-            template_files = st.file_uploader(
-                "Upload layout template files (.pptx)",
+        layout_source = st.radio(
+            "Layout source",
+            ["Use existing layouts", "Upload new layouts"],
+            horizontal=True
+        )
+
+        existing_pptx_layouts = [
+            layout for layout in load_existing_templates()
+            if layout["type"].lower() == ".pptx"
+        ]
+
+        selected_existing_names = []
+        uploaded_template_files = None
+
+        if layout_source == "Use existing layouts":
+            if existing_pptx_layouts:
+                selected_existing_names = st.multiselect(
+                    "Select existing layout templates",
+                    options=[layout["name"] for layout in existing_pptx_layouts],
+                    default=[]
+                )
+            else:
+                st.info("No existing PPTX layouts found. Please upload a new one.")
+
+        else:
+            uploaded_template_files = st.file_uploader(
+                "Upload new layout template files (.pptx)",
                 type=["pptx"],
                 accept_multiple_files=True,
                 key="template_files_url"
             )
 
-            url_submit = st.form_submit_button(
-                "Generate Layouts",
-                use_container_width=True
-            )
+        layout_count = st.number_input(
+            "How many layouts do you need?",
+            min_value=1,
+            max_value=5,
+            value=1,
+            step=1
+        )
 
-        if url_submit:
+        generate_clicked = st.button("Generate Layouts", use_container_width=True, type="primary")
+
+        if generate_clicked:
             if not website_url.strip():
                 st.warning("Please enter a valid website URL.")
-            elif not template_files:
-                st.warning("Please upload at least one PPTX template file.")
-            else:
-                try:
-                    saved_paths = [save_uploaded_template(f) for f in template_files]
-                    st.session_state["current_template_paths"] = saved_paths
+                st.stop()
 
-                    payload = {
-                        "link": website_url,
-                        "template_paths": saved_paths
-                    }
+            try:
+                selected_paths = []
 
+                if layout_source == "Use existing layouts":
+                    if not selected_existing_names:
+                        st.warning("Please select at least one existing PPTX layout.")
+                        st.stop()
+
+                    selected_paths = [
+                        layout["path"]
+                        for layout in existing_pptx_layouts
+                        if layout["name"] in selected_existing_names
+                    ]
+
+                else:
+                    if not uploaded_template_files:
+                        st.warning("Please upload at least one PPTX template file.")
+                        st.stop()
+
+                    selected_paths = [save_uploaded_template(f) for f in uploaded_template_files]
+
+                if len(selected_paths) > 5:
+                    st.warning("You can use a maximum of 5 layout templates.")
+                    st.stop()
+
+                st.session_state["current_template_paths"] = selected_paths
+
+                payload = {
+                    "link": website_url,
+                    "template_paths": selected_paths,
+                    "layout_count": int(layout_count)
+                }
+
+                with st.spinner("Generating layouts... Please wait..."):
                     response = requests.post(
                         f"{BACKEND_URL}/generate",
                         json=payload,
                         timeout=300
                     )
 
-                    if response.status_code != 200:
-                        st.error(f"Backend error {response.status_code}")
-                        st.code(response.text)
+                if response.status_code != 200:
+                    st.error(f"Backend error {response.status_code}")
+                    st.code(response.text)
+                    st.stop()
 
-                    response.raise_for_status()
-                    st.success("Template generation request sent successfully.")
-                    st.rerun()
+                result = response.json()
 
-                except Exception as e:
-                    st.error(f"Request failed: {e}")
+                st.session_state["generated_result"] = result
+                st.session_state["generated_from_url"] = website_url
+                st.session_state["generated_file_path"] = result.get("file_path")
+                st.session_state["generated_powerpoint_paths"] = result.get("powerpoint_paths", [])
+                st.session_state["generated_png_image_path"] = result.get("png_image_path")
+                st.session_state["layout_count"] = int(layout_count)
+
+                st.switch_page("pages/customize.py")
+
+            except requests.exceptions.Timeout:
+                st.error("Backend took too long to respond.")
+            except requests.exceptions.RequestException as e:
+                st.error(f"Request failed: {e}")
+            except Exception as e:
+                st.error(f"Unexpected error: {e}")
 
     with tab2:
         with st.form("file_form"):
