@@ -11,7 +11,7 @@ TEMPLATE_SAVE_DIR.mkdir(parents=True, exist_ok=True)
 
 def load_existing_templates():
     templates = []
-    allowed_exts = {".pptx", ".png", ".jpg", ".jpeg", ".webp"}
+    allowed_exts = {".png", ".jpg", ".jpeg", ".webp"}
 
     if not TEMPLATE_SAVE_DIR.exists():
         return templates
@@ -77,9 +77,9 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-left_col, right_col = st.columns([1.2, 1], gap="large")
+left_col, center_col, right_col = st.columns([0.5, 5, 0.5], gap="large")
 
-with left_col:
+with center_col:
     tab1, tab2 = st.tabs(["URL", "File"])
 
     with tab1:
@@ -90,11 +90,102 @@ with left_col:
             placeholder="https://example.com"
         )
 
-        layout_source = st.radio(
-            "Layout source",
-            ["Use existing layouts", "Upload new layouts"],
-            horizontal=True
-        )
+        st.markdown('<div class="layout-title">Current Layouts</div>', unsafe_allow_html=True)
+
+        #layouts = load_existing_templates()
+
+        # if layouts:
+        #     for i, layout in enumerate(layouts):
+        #         row1, row2 = st.columns([6, 2])
+
+        #         with row1:
+        #             file_ext = layout.get("type", "").lower()
+
+        #             if file_ext in [".png", ".jpg", ".jpeg", ".webp"]:
+        #                 label = f"🖼️ {layout['name']}"
+        #             #elif file_ext == ".pptx":
+        #             #    label = f"📄 {layout['name']}"
+        #             else:
+        #                 label = f"📁 {layout['name']}"
+
+        #             if st.button(label, key=f"layout_{i}", use_container_width=True):
+        #                 st.session_state["selected_layout"] = layout
+        #                 st.switch_page("pages/layout_preview.py")
+
+        #         with row2:
+        #             if st.button("Delete", key=f"delete_{i}", use_container_width=True, type="secondary"):
+        #                 try:
+        #                     os.remove(layout["path"])
+
+        #                     selected = st.session_state.get("selected_layout")
+        #                     if selected and selected["path"] == layout["path"]:
+        #                         st.session_state["selected_layout"] = None
+
+        #                     st.rerun()
+        #                 except Exception as e:
+        #                     st.error(f"Delete failed: {e}")
+        # else:
+        #     st.info("No layouts found.")
+
+        image_layouts = load_existing_templates()
+
+        if image_layouts:
+            st.markdown("#### Available Layouts")
+
+            cols_per_row = 3
+            selected_layout = st.session_state.get("selected_layout")
+
+            for row_start in range(0, len(image_layouts), cols_per_row):
+                row_items = image_layouts[row_start:row_start + cols_per_row]
+                cols = st.columns(cols_per_row)
+
+                for col, layout in zip(cols, row_items):
+                    with col:
+                        is_selected = (
+                            selected_layout is not None
+                            and selected_layout.get("path") == layout.get("path")
+                        )
+
+                        if is_selected:
+                            st.markdown("**✅ Selected**")
+                        else:
+                            st.markdown("** **")
+
+                        st.image(layout["path"], use_container_width=True)
+                        st.caption(layout["name"])
+
+                        if st.button(
+                            "Select" if not is_selected else "Selected",
+                            key=f"select_{layout['path']}",
+                            use_container_width=True,
+                            type="primary" if is_selected else "secondary"
+                        ):
+                            st.session_state["selected_layout"] = layout
+                            st.rerun()
+
+                        if st.button(
+                            "Delete",
+                            key=f"delete_{layout['path']}",
+                            use_container_width=True
+                        ):
+                            try:
+                                os.remove(layout["path"])
+
+                                selected = st.session_state.get("selected_layout")
+                                if selected and selected["path"] == layout["path"]:
+                                    st.session_state["selected_layout"] = None
+
+                                st.rerun()
+                            except Exception as e:
+                                st.error(f"Delete failed: {e}")
+        else:
+            st.info("No image layouts found.")
+
+        # layout_source = st.radio(
+        #     "Layout source",
+        #     ["Use existing layouts", "Upload new layouts"],
+        #     horizontal=True
+        # )
 
         existing_pptx_layouts = [
             layout for layout in load_existing_templates()
@@ -104,23 +195,23 @@ with left_col:
         selected_existing_names = []
         uploaded_template_files = None
 
-        if layout_source == "Use existing layouts":
-            if existing_pptx_layouts:
-                selected_existing_names = st.multiselect(
-                    "Select existing layout templates",
-                    options=[layout["name"] for layout in existing_pptx_layouts],
-                    default=[]
-                )
-            else:
-                st.info("No existing PPTX layouts found. Please upload a new one.")
+        # if layout_source == "Use existing layouts":
+        #     if existing_pptx_layouts:
+        #         selected_existing_names = st.multiselect(
+        #             "Select existing layout templates",
+        #             options=[layout["name"] for layout in existing_pptx_layouts],
+        #             default=[]
+        #         )
+        #     else:
+        #         st.info("No existing PPTX layouts found. Please upload a new one.")
 
-        else:
-            uploaded_template_files = st.file_uploader(
-                "Upload new layout template files (.pptx)",
-                type=["pptx"],
-                accept_multiple_files=True,
-                key="template_files_url"
-            )
+        #else:
+        uploaded_template_files = st.file_uploader(
+            "Upload new layout template files (.pptx)",
+            type=["pptx"],
+            accept_multiple_files=True,
+            key="template_files_url"
+        )
 
         layout_count = st.number_input(
             "How many layouts do you need?",
@@ -144,23 +235,23 @@ with left_col:
             try:
                 selected_paths = []
 
-                if layout_source == "Use existing layouts":
-                    if not selected_existing_names:
-                        st.warning("Please select at least one existing PPTX layout.")
-                        st.stop()
+                #if layout_source == "Use existing layouts":
+                #    if not selected_existing_names:
+                #        st.warning("Please select at least one existing PPTX layout.")
+                #        st.stop()
 
-                    selected_paths = [
+                selected_paths = [
                         layout["path"]
                         for layout in existing_pptx_layouts
                         if layout["name"] in selected_existing_names
                     ]
 
-                else:
-                    if not uploaded_template_files:
-                        st.warning("Please upload at least one PPTX template file.")
-                        st.stop()
+                #else:
+                #    if not uploaded_template_files:
+                #        st.warning("Please upload at least one PPTX template file.")
+                #        st.stop()
 
-                    selected_paths = [save_uploaded_template(f) for f in uploaded_template_files]
+                selected_paths = [save_uploaded_template(f) for f in uploaded_template_files]
 
                 if len(selected_paths) > 5:
                     st.warning("You can use a maximum of 5 layout templates.")
@@ -217,40 +308,40 @@ with left_col:
         st.markdown("#### Generate from File")
         st.caption("This tab is UI-only for now.")
 
-with right_col:
-    st.markdown('<div class="layout-title">Current Layouts</div>', unsafe_allow_html=True)
+# with right_col:
+#     st.markdown('<div class="layout-title">Current Layouts</div>', unsafe_allow_html=True)
 
-    layouts = load_existing_templates()
+#     layouts = load_existing_templates()
 
-    if layouts:
-        for i, layout in enumerate(layouts):
-            row1, row2 = st.columns([6, 2])
+#     if layouts:
+#         for i, layout in enumerate(layouts):
+#             row1, row2 = st.columns([6, 2])
 
-            with row1:
-                file_ext = layout.get("type", "").lower()
+#             with row1:
+#                 file_ext = layout.get("type", "").lower()
 
-                if file_ext in [".png", ".jpg", ".jpeg", ".webp"]:
-                    label = f"🖼️ {layout['name']}"
-                elif file_ext == ".pptx":
-                    label = f"📄 {layout['name']}"
-                else:
-                    label = f"📁 {layout['name']}"
+#                 if file_ext in [".png", ".jpg", ".jpeg", ".webp"]:
+#                     label = f"🖼️ {layout['name']}"
+#                 elif file_ext == ".pptx":
+#                     label = f"📄 {layout['name']}"
+#                 else:
+#                     label = f"📁 {layout['name']}"
 
-                if st.button(label, key=f"layout_{i}", use_container_width=True):
-                    st.session_state["selected_layout"] = layout
-                    st.switch_page("pages/layout_preview.py")
+#                 if st.button(label, key=f"layout_{i}", use_container_width=True):
+#                     st.session_state["selected_layout"] = layout
+#                     st.switch_page("pages/layout_preview.py")
 
-            with row2:
-                if st.button("Delete", key=f"delete_{i}", use_container_width=True, type="secondary"):
-                    try:
-                        os.remove(layout["path"])
+#             with row2:
+#                 if st.button("Delete", key=f"delete_{i}", use_container_width=True, type="secondary"):
+#                     try:
+#                         os.remove(layout["path"])
 
-                        selected = st.session_state.get("selected_layout")
-                        if selected and selected["path"] == layout["path"]:
-                            st.session_state["selected_layout"] = None
+#                         selected = st.session_state.get("selected_layout")
+#                         if selected and selected["path"] == layout["path"]:
+#                             st.session_state["selected_layout"] = None
 
-                        st.rerun()
-                    except Exception as e:
-                        st.error(f"Delete failed: {e}")
-    else:
-        st.info("No layouts found.")
+#                         st.rerun()
+#                     except Exception as e:
+#                         st.error(f"Delete failed: {e}")
+#     else:
+#         st.info("No layouts found.")
