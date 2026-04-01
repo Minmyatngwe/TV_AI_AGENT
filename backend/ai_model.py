@@ -80,6 +80,7 @@ def get_placeholder_name(slides_path):
         slide_placeholder[slide_file_name] = []
         
         print(f"Reading: {slide_file_name}")
+        print(path)
         presentation = Presentation(path)
         
         for slide in presentation.slides:
@@ -146,6 +147,8 @@ def recursive_replace(shapes, ai_response, slide_name, folder_path):
 def replace_placeholder_text(slides_path,ai_response,file_path):
     powerpoint_file_path=[]
     for i,path in enumerate(slides_path):
+
+        print(path)
         presentation=Presentation(path)
         slide_name=os.path.basename(path)
         for slide in presentation.slides:
@@ -195,6 +198,7 @@ def convert_pptx_to_png(pptx_path):
             
     return png_full_path
 def summarize(link,slides_path):
+        print("inside summarize function")
         global summarize_chain
         response=requests.get(link)
         soup=BeautifulSoup(response.content,'html.parser')
@@ -278,7 +282,9 @@ def generate_template(link,slides_path):
             png_image_path.append(png_path)
         return file_path,powerpoint_paths,png_image_path,web_text,ai_response
 
-    except Exception as e :
-        return e
+    except Exception:
+            import traceback
+            traceback.print_exc()
+            raise
 if __name__=="__main__":
     print(generate_template("https://www.roboai.fi/en/we-research-en/we-research-gerotestbed-model-supporting-the-development-of-agetechnologies/",["./template/testing_.pptx","./template/second_testing_template.pptx","./template/template1.pptx"]))

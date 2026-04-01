@@ -35,6 +35,7 @@ def load_existing_templates():
                 })
 
     templates.sort(key=lambda x: x["name"].lower())
+    print(templates)
     return templates
 
 
@@ -50,7 +51,7 @@ if "current_template_paths" not in st.session_state:
     st.session_state["current_template_paths"] = []
 
 if "selected_layout" not in st.session_state:
-    st.session_state["selected_layout"] = None
+    st.session_state["selected_layout"] = []
 
 if "generated_result" not in st.session_state:
     st.session_state["generated_result"] = None
@@ -133,7 +134,7 @@ with center_col:
             st.markdown("#### Available Layouts")
 
             cols_per_row = 3
-            selected_layout = st.session_state.get("selected_layout")
+            selected_layouts = st.session_state.get("selected_layouts", [])
 
             for row_start in range(0, len(image_layouts), cols_per_row):
                 row_items = image_layouts[row_start:row_start + cols_per_row]
@@ -141,56 +142,64 @@ with center_col:
 
                 for col, layout in zip(cols, row_items):
                     with col:
-                        is_selected = (
-                            selected_layout is not None
-                            and selected_layout.get("path") == layout.get("path")
+                        is_selected = any(
+                            item["path"] == layout["path"]
+                            for item in selected_layouts
                         )
 
-                        if is_selected:
-                            st.markdown("**✅ Selected**")
-                        else:
-                            st.markdown("** **")
+                        st.markdown("**✅ Selected**" if is_selected else "** **")
 
-                        st.image(layout["path"], use_container_width=True)
+                        st.image(layout["path"], width="stretch")
                         st.caption(layout["name"])
 
                         if st.button(
-                            "Select" if not is_selected else "Selected",
+                            "Unselect" if is_selected else "Select",
                             key=f"select_{layout['path']}",
-                            use_container_width=True,
+                            width="stretch",
                             type="primary" if is_selected else "secondary"
                         ):
-                            st.session_state["selected_layout"] = layout
+                            if is_selected:
+                                st.session_state["selected_layouts"] = [
+                                    item for item in selected_layouts
+                                    if item["path"] != layout["path"]
+                                ]
+                            else:
+                                st.session_state["selected_layouts"] = selected_layouts + [{
+                                    "name": layout["name"],
+                                    "path": layout["path"],
+                                    "type": layout.get("type", "")
+                                }]
                             st.rerun()
 
                         if st.button(
                             "Delete",
                             key=f"delete_{layout['path']}",
-                            use_container_width=True
+                            width="stretch"
                         ):
                             try:
                                 os.remove(layout["path"])
 
-                                selected = st.session_state.get("selected_layout")
-                                if selected and selected["path"] == layout["path"]:
-                                    st.session_state["selected_layout"] = None
-
+                                st.session_state["selected_layouts"] = [
+                                    item for item in st.session_state.get("selected_layouts", [])
+                                    if item["path"] != layout["path"]
+                                ]
                                 st.rerun()
                             except Exception as e:
                                 st.error(f"Delete failed: {e}")
         else:
             st.info("No image layouts found.")
-
-        # layout_source = st.radio(
-        #     "Layout source",
-        #     ["Use existing layouts", "Upload new layouts"],
-        #     horizontal=True
-        # )
-
-        existing_pptx_layouts = [
-            layout for layout in load_existing_templates()
-            if layout["type"].lower() == ".pptx"
-        ]
+        existing_pptx_layouts=[]
+        for layout in load_existing_templates():
+            file_name=layout['name']
+            
+            
+            
+            tempo_parent_path=os.path.dirname(os.path.dirname(layout['path']))
+            full_path=os.path.join(tempo_parent_path,f"{file_name}.pptx")
+            existing_pptx_layouts.append(full_path)
+            
+     
+        print(existing_pptx_layouts)
 
         selected_existing_names = []
         uploaded_template_files = None
@@ -213,13 +222,6 @@ with center_col:
             key="template_files_url"
         )
 
-        layout_count = st.number_input(
-            "How many layouts do you need?",
-            min_value=1,
-            max_value=5,
-            value=1,
-            step=1
-        )
 
         generate_clicked = st.button(
             "Generate Layouts",
@@ -228,6 +230,8 @@ with center_col:
         )
 
         if generate_clicked:
+            print("selected layout")
+            print(st.session_state["selected_layouts"])
             if not website_url.strip():
                 st.warning("Please enter a valid website URL.")
                 st.stop()
@@ -239,19 +243,20 @@ with center_col:
                 #    if not selected_existing_names:
                 #        st.warning("Please select at least one existing PPTX layout.")
                 #        st.stop()
-
+                selected_existing_names=[name['name'] for name in st.session_state["selected_layouts"] ]
                 selected_paths = [
-                        layout["path"]
-                        for layout in existing_pptx_layouts
-                        if layout["name"] in selected_existing_names
-                    ]
+                                    path for path in existing_pptx_layouts
+                                    if os.path.splitext(os.path.basename(path))[0] in selected_existing_names
+                                ]
+                print(selected_paths)
+                
 
                 #else:
                 #    if not uploaded_template_files:
                 #        st.warning("Please upload at least one PPTX template file.")
                 #        st.stop()
 
-                selected_paths = [save_uploaded_template(f) for f in uploaded_template_files]
+                # selected_paths = [save_uploaded_template(f) for f in uploaded_template_files]
 
                 if len(selected_paths) > 5:
                     st.warning("You can use a maximum of 5 layout templates.")
@@ -262,8 +267,10 @@ with center_col:
                 payload = {
                     "link": website_url,
                     "template_paths": selected_paths,
-                    "layout_count": int(layout_count)
+
                 }
+                print("payload")
+                print(payload)
 
                 status_box = st.empty()
                 status_box.info("Sending request to backend...")
@@ -291,7 +298,6 @@ with center_col:
                 st.session_state["generated_png_image_paths"] = result.get("png_image_paths", [])
                 st.session_state["generated_web_text"] = result.get("web_text", "")
                 st.session_state["generated_placeholders"] = result.get("placeholders", [])
-                st.session_state["layout_count"] = int(layout_count)
 
                 status_box.success("Generation complete. Redirecting to customize page...")
 

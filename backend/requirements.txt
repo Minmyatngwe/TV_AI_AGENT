@@ -14,3 +14,4 @@ playwright_stealth
 qrcode
 python-pptx
 pdf2image
+streamlit

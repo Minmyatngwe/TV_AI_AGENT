@@ -20,6 +20,9 @@ class PATH(BaseModel):
 
 @app.post("/generate")
 def generate(template:Template):
+    print("path")
+    print(template.template_paths)
+
     file_path,powerpoint_paths,png_image_paths,web_text,placeholders=generate_template(template.link,template.template_paths)
 
     return {
@@ -66,6 +69,7 @@ def convert_pptx_to_png(pptx_path):
 
 @app.post("/convert_pptx")
 def convert(path:PATH):
+    print("covert is called")
     convert_pptx_to_png(path.path)
     
 
