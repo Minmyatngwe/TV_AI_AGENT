@@ -79,12 +79,12 @@ class CUTOMIZE(BaseModel):
     web_text:str
     prompt:str
     placeholder:list[dict]
-    slide_path:str
+    slide_path:list
     file_path:str
     
 @app.post("/cutomize")
 def cutomize_pptx(cutomize:CUTOMIZE):
-    cutomize_template(
+    customize_template(
         web_text=cutomize.web_text,
         prompt=cutomize.prompt,
         placeholder=cutomize.placeholder,

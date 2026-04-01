@@ -4,6 +4,7 @@ from prompts import customize
 from langchain_ollama import ChatOllama
 import json
 from ai_model import replace_placeholder_text,convert_pptx_to_png
+import ast 
 cutomize_prompt=ChatPromptTemplate(
     [
         ("system",customize)
@@ -21,11 +22,19 @@ def customize_template(web_text,prompt,placeholder,slide_path,file_path):
          "prompt":prompt
         }
     )
-    ai_response=json.load(ai_response.content)
+    print("ai_response")
+    print(ai_response.content)
+    raw_content=ai_response.content
+    try:
+        ai_response = json.loads(raw_content)
+    except json.JSONDecodeError:
+        ai_response = ast.literal_eval(raw_content)
+    
     powerpoint_path=replace_placeholder_text(slide_path,ai_response,file_path)
+    
     png_full_path=convert_pptx_to_png(powerpoint_path[0])
     
-    return powerpoint_path,png_full_path
+    return powerpoint_path,png_full_path    
     
     
     

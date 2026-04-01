@@ -106,26 +106,41 @@ def recursive_replace(shapes, ai_response, slide_name, folder_path):
     if tempo_dict is None:
         return
 
-    normalized_map = {normalize_placeholder(k): v for k, v in tempo_dict.items()}
+    # support both "title" and "{{title}}"
+    normalized_map = {}
+    for k, v in tempo_dict.items():
+        key = normalize_placeholder(k)
+        normalized_map[key] = v
+
+        if key.startswith("{{") and key.endswith("}}"):
+            stripped = key[2:-2].strip()
+            normalized_map[stripped] = v
+        else:
+            normalized_map[f"{{{{{key}}}}}"] = v
 
     for shape in list(shapes):
-        shape_name = normalize_placeholder(shape.name.lower())
+        shape_name = normalize_placeholder(shape.name)
 
-        if "image" in shape_name:
-            if shape.name in tempo_dict:
-                image_path = os.path.join(folder_path, tempo_dict[shape.name])
-            elif normalize_placeholder(shape.name) in normalized_map:
-                image_path = os.path.join(folder_path, normalized_map[normalize_placeholder(shape.name)])
-            else:
-                continue
+        # image replacement
+        if "image" in shape_name.lower():
+            image_value = (
+                normalized_map.get(shape.name)
+                or normalized_map.get(normalize_placeholder(shape.name))
+                or normalized_map.get(shape.name.lower())
+                or normalized_map.get("main_image")
+                or normalized_map.get("{{main_image}}")
+            )
 
-            left, top, width, height = shape.left, shape.top, shape.width, shape.height
-            sp = shape._element
-            sp.getparent().remove(sp)
-            shapes.add_picture(image_path, left, top, width=width, height=height)
+            if image_value:
+                image_path = os.path.join(folder_path, image_value)
+                left, top, width, height = shape.left, shape.top, shape.width, shape.height
+                sp = shape._element
+                sp.getparent().remove(sp)
+                shapes.add_picture(image_path, left, top, width=width, height=height)
             continue
 
-        if "qr_code" in shape_name:
+        # qr replacement
+        if "qr_code" in shape_name.lower():
             qr_path = os.path.join(folder_path, "qr_code.png")
             left, top, width, height = shape.left, shape.top, shape.width, shape.height
             sp = shape._element
@@ -133,17 +148,24 @@ def recursive_replace(shapes, ai_response, slide_name, folder_path):
             shapes.add_picture(qr_path, left, top, width=width, height=height)
             continue
 
+        # group
         if shape.shape_type == MSO_SHAPE_TYPE.GROUP:
             recursive_replace(shape.shapes, ai_response, slide_name, folder_path)
             continue
 
+        # text replacement
         if shape.has_text_frame:
             for paragraph in shape.text_frame.paragraphs:
                 clean_text = normalize_placeholder(paragraph.text)
+
                 if clean_text.startswith("{{") and clean_text.endswith("}}"):
-                    if len(paragraph.runs) == 1 and clean_text in normalized_map:
-                        paragraph.runs[0].text = str(normalized_map[clean_text])
-                        
+                    replacement = (
+                        normalized_map.get(clean_text)
+                        or normalized_map.get(clean_text[2:-2].strip())
+                    )
+
+                    if replacement is not None and len(paragraph.runs) == 1:
+                        paragraph.runs[0].text = str(replacement)                        
 def replace_placeholder_text(slides_path,ai_response,file_path):
     powerpoint_file_path=[]
     for i,path in enumerate(slides_path):
@@ -198,7 +220,6 @@ def convert_pptx_to_png(pptx_path):
             
     return png_full_path
 def summarize(link,slides_path):
-        print("inside summarize function")
         global summarize_chain
         response=requests.get(link)
         soup=BeautifulSoup(response.content,'html.parser')
@@ -208,7 +229,7 @@ def summarize(link,slides_path):
         images=soup.find_all('img',class_="fl-photo-img")
 
         slide_placeholders=get_placeholder_name(slides_path)
-        
+        print(slide_placeholders)
         summarization=summarize_chain.invoke({"input":text_clean,"slide_placeholder":slide_placeholders})
         print(summarization.content)
         try:

@@ -279,7 +279,7 @@ with center_col:
                     response = requests.post(
                         f"{BACKEND_URL}/generate",
                         json=payload,
-                        timeout=300
+                        timeout=500
                     )
 
                 if response.status_code != 200:
@@ -287,6 +287,7 @@ with center_col:
                     st.error(f"Backend error {response.status_code}")
                     st.code(response.text)
                     st.stop()
+                print(response.text)
 
                 result = response.json()
 
@@ -298,9 +299,8 @@ with center_col:
                 st.session_state["generated_png_image_paths"] = result.get("png_image_paths", [])
                 st.session_state["generated_web_text"] = result.get("web_text", "")
                 st.session_state["generated_placeholders"] = result.get("placeholders", [])
-
+                
                 status_box.success("Generation complete. Redirecting to customize page...")
-
                 st.switch_page("pages/customize.py")
 
             except requests.exceptions.Timeout:

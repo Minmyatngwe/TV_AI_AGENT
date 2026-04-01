@@ -1,7 +1,7 @@
 import streamlit as st
 import requests
 import os
-
+from pathlib import Path
 BACKEND_URL = "http://127.0.0.1:8000"
 
 st.markdown('<div class="hero-title">Customize Layouts</div>', unsafe_allow_html=True)
@@ -26,10 +26,17 @@ if not generated_result:
 st.write("### Generated Layout Previews")
 
 if png_image_paths:
+    cwd=os.getcwd()
+    cwd=Path(cwd).parent
+    backend_path=cwd/"backend"
+    
     cols = st.columns(2)
     for i, image_path in enumerate(png_image_paths):
+        real_path=Path(image_path)
+        full_path=backend_path/real_path
+        print(full_path)
         with cols[i % 2]:
-            st.image(image_path, caption=f"Layout {i+1}", use_container_width=True)
+            st.image(full_path, caption=f"Layout {i+1}", use_container_width=True)
 else:
     st.info("No preview images found.")
 
@@ -81,7 +88,7 @@ if st.button("Apply Customization", type="primary", use_container_width=True):
             "web_text": web_text,
             "prompt": custom_prompt,
             "placeholder": placeholders,
-            "slide_path": selected_slide_path,
+            "slide_path": [selected_slide_path],
             "file_path": file_path
         }
 
