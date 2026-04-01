@@ -1,5 +1,6 @@
 import streamlit as st
 import requests
+import os
 
 BACKEND_URL = "http://127.0.0.1:8000"
 
@@ -44,11 +45,11 @@ if web_text:
     with st.expander("Show extracted web text"):
         st.write(web_text)
 
-st.write("### Placeholder Data")
-if placeholders:
-    st.json(placeholders)
-else:
-    st.info("No placeholder data found.")
+#st.write("### Placeholder Data")
+#if placeholders:
+#    st.json(placeholders)
+#else:
+#    st.info("No placeholder data found.")
 
 
 st.write("### Customize Content")
@@ -86,7 +87,7 @@ if st.button("Apply Customization", type="primary", use_container_width=True):
 
         with st.spinner("Applying customization..."):
             response = requests.post(
-                f"{BACKEND_URL}/customize",
+                f"{BACKEND_URL}/cutomize",
                 json=payload,
                 timeout=300
             )
@@ -98,6 +99,25 @@ if st.button("Apply Customization", type="primary", use_container_width=True):
 
         customize_result = response.json()
         st.session_state["customize_result"] = customize_result
+
+        convert_response = requests.post(
+            f"{BACKEND_URL}/convert_pptx",
+            json={"path": selected_slide_path},
+            timeout=300
+        )
+
+        if convert_response.status_code != 200:
+            st.warning("Customization completed, but preview image conversion failed.")
+        else:
+            # backend does not return image path, so build it manually
+            output_dir = os.path.dirname(selected_slide_path)
+            base_name = os.path.splitext(os.path.basename(selected_slide_path))[0]
+            converted_png_path = os.path.join(output_dir, "image", f"{base_name}.png")
+
+            st.session_state["customized_preview_path"] = converted_png_path
+
+        st.success("Customization complete.")
+        st.rerun()
 
         st.success("Customization complete.")
 

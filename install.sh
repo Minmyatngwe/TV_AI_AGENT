@@ -1,6 +1,7 @@
 sudo apt upgrade
 sudo apt update
 sudo apt install curl
+sudo apt install libreoffice -y
 sudo apt install python3.10-venv
 cd backend
 python3 -m venv .venv
