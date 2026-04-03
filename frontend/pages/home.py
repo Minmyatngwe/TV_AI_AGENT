@@ -93,41 +93,6 @@ with center_col:
 
         st.markdown('<div class="layout-title">Current Layouts</div>', unsafe_allow_html=True)
 
-        #layouts = load_existing_templates()
-
-        # if layouts:
-        #     for i, layout in enumerate(layouts):
-        #         row1, row2 = st.columns([6, 2])
-
-        #         with row1:
-        #             file_ext = layout.get("type", "").lower()
-
-        #             if file_ext in [".png", ".jpg", ".jpeg", ".webp"]:
-        #                 label = f"🖼️ {layout['name']}"
-        #             #elif file_ext == ".pptx":
-        #             #    label = f"📄 {layout['name']}"
-        #             else:
-        #                 label = f"📁 {layout['name']}"
-
-        #             if st.button(label, key=f"layout_{i}", use_container_width=True):
-        #                 st.session_state["selected_layout"] = layout
-        #                 st.switch_page("pages/layout_preview.py")
-
-        #         with row2:
-        #             if st.button("Delete", key=f"delete_{i}", use_container_width=True, type="secondary"):
-        #                 try:
-        #                     os.remove(layout["path"])
-
-        #                     selected = st.session_state.get("selected_layout")
-        #                     if selected and selected["path"] == layout["path"]:
-        #                         st.session_state["selected_layout"] = None
-
-        #                     st.rerun()
-        #                 except Exception as e:
-        #                     st.error(f"Delete failed: {e}")
-        # else:
-        #     st.info("No layouts found.")
-
         image_layouts = load_existing_templates()
 
         if image_layouts:
@@ -202,25 +167,6 @@ with center_col:
         print(existing_pptx_layouts)
 
         selected_existing_names = []
-        uploaded_template_files = None
-
-        # if layout_source == "Use existing layouts":
-        #     if existing_pptx_layouts:
-        #         selected_existing_names = st.multiselect(
-        #             "Select existing layout templates",
-        #             options=[layout["name"] for layout in existing_pptx_layouts],
-        #             default=[]
-        #         )
-        #     else:
-        #         st.info("No existing PPTX layouts found. Please upload a new one.")
-
-        #else:
-        uploaded_template_files = st.file_uploader(
-            "Upload new layout template files (.pptx)",
-            type=["pptx"],
-            accept_multiple_files=True,
-            key="template_files_url"
-        )
 
 
         generate_clicked = st.button(
@@ -239,10 +185,6 @@ with center_col:
             try:
                 selected_paths = []
 
-                #if layout_source == "Use existing layouts":
-                #    if not selected_existing_names:
-                #        st.warning("Please select at least one existing PPTX layout.")
-                #        st.stop()
                 selected_existing_names=[name['name'] for name in st.session_state["selected_layouts"] ]
                 selected_paths = [
                                     path for path in existing_pptx_layouts
@@ -250,13 +192,6 @@ with center_col:
                                 ]
                 print(selected_paths)
                 
-
-                #else:
-                #    if not uploaded_template_files:
-                #        st.warning("Please upload at least one PPTX template file.")
-                #        st.stop()
-
-                # selected_paths = [save_uploaded_template(f) for f in uploaded_template_files]
 
                 if len(selected_paths) > 5:
                     st.warning("You can use a maximum of 5 layout templates.")
@@ -269,8 +204,7 @@ with center_col:
                     "template_paths": selected_paths,
 
                 }
-                print("payload")
-                print(payload)
+                print(f"payload: {payload}")
 
                 status_box = st.empty()
                 status_box.info("Sending request to backend...")
@@ -287,19 +221,67 @@ with center_col:
                     st.error(f"Backend error {response.status_code}")
                     st.code(response.text)
                     st.stop()
-                print(response.text)
+                # print(f"Response: {response.text}")
+
+                # result = response.json()
+
+                # # save everything frontend needs
+                # st.session_state["generated_result"] = result
+                # st.session_state["generated_from_url"] = website_url
+                # st.session_state["generated_file_path"] = result.get("file_path")
+                # st.session_state["generated_powerpoint_paths"] = result.get("powerpoint_paths", [])
+                # st.session_state["generated_png_image_paths"] = result.get("png_image_paths", [])
+                # st.session_state["generated_web_text"] = result.get("web_text", "")
+                # st.session_state["generated_placeholders"] = result.get("placeholders", [])
+                
+                # status_box.success("Generation complete. Redirecting to customize page...")
+                # st.switch_page("pages/customize.py")
+
+                print(f"Response: {response.text}")
 
                 result = response.json()
+
+                # call convert endpoint for each generated pptx
+                #generated_pptx_paths = result.get("powerpoint_paths", [])
+                #converted_png_paths = []
+
+                # for pptx_path in generated_pptx_paths:
+                #     print("Calling convert endpoint for:", pptx_path)
+
+                # convert_response = requests.post(
+                #     f"{BACKEND_URL}/convert_pptx",
+                #     json={"path": pptx_path},
+                #     timeout=300
+                # )
+
+                # print("Convert status:", convert_response.status_code)
+                # print("Convert response:", convert_response.text)
+
+                # if convert_response.status_code != 200:
+                #     status_box.error(f"Convert failed for: {pptx_path}")
+                #     st.code(convert_response.text)
+                #     st.stop()
+
+                # try:
+                #     convert_result = convert_response.json()
+                #     png_path = convert_result.get("png_path")
+                #     if png_path:
+                #         converted_png_paths.append(png_path)
+                # except Exception:
+                #     pass
 
                 # save everything frontend needs
                 st.session_state["generated_result"] = result
                 st.session_state["generated_from_url"] = website_url
                 st.session_state["generated_file_path"] = result.get("file_path")
+
+                # directly use backend response
                 st.session_state["generated_powerpoint_paths"] = result.get("powerpoint_paths", [])
                 st.session_state["generated_png_image_paths"] = result.get("png_image_paths", [])
+
                 st.session_state["generated_web_text"] = result.get("web_text", "")
                 st.session_state["generated_placeholders"] = result.get("placeholders", [])
-                
+
                 status_box.success("Generation complete. Redirecting to customize page...")
                 st.switch_page("pages/customize.py")
 
@@ -312,42 +294,11 @@ with center_col:
 
     with tab2:
         st.markdown("#### Generate from File")
-        st.caption("This tab is UI-only for now.")
+        uploaded_template_files = None
 
-# with right_col:
-#     st.markdown('<div class="layout-title">Current Layouts</div>', unsafe_allow_html=True)
-
-#     layouts = load_existing_templates()
-
-#     if layouts:
-#         for i, layout in enumerate(layouts):
-#             row1, row2 = st.columns([6, 2])
-
-#             with row1:
-#                 file_ext = layout.get("type", "").lower()
-
-#                 if file_ext in [".png", ".jpg", ".jpeg", ".webp"]:
-#                     label = f"🖼️ {layout['name']}"
-#                 elif file_ext == ".pptx":
-#                     label = f"📄 {layout['name']}"
-#                 else:
-#                     label = f"📁 {layout['name']}"
-
-#                 if st.button(label, key=f"layout_{i}", use_container_width=True):
-#                     st.session_state["selected_layout"] = layout
-#                     st.switch_page("pages/layout_preview.py")
-
-#             with row2:
-#                 if st.button("Delete", key=f"delete_{i}", use_container_width=True, type="secondary"):
-#                     try:
-#                         os.remove(layout["path"])
-
-#                         selected = st.session_state.get("selected_layout")
-#                         if selected and selected["path"] == layout["path"]:
-#                             st.session_state["selected_layout"] = None
-
-#                         st.rerun()
-#                     except Exception as e:
-#                         st.error(f"Delete failed: {e}")
-#     else:
-#         st.info("No layouts found.")
+        uploaded_template_files = st.file_uploader(
+            "Upload new layout template files (.pptx)",
+            type=["pptx"],
+            accept_multiple_files=True,
+            key="template_files_url"
+        )
