@@ -213,7 +213,7 @@ with center_col:
                     response = requests.post(
                         f"{BACKEND_URL}/generate",
                         json=payload,
-                        timeout=500
+                        timeout=800
                     )
 
                 if response.status_code != 200:
@@ -221,54 +221,11 @@ with center_col:
                     st.error(f"Backend error {response.status_code}")
                     st.code(response.text)
                     st.stop()
-                # print(f"Response: {response.text}")
-
-                # result = response.json()
-
-                # # save everything frontend needs
-                # st.session_state["generated_result"] = result
-                # st.session_state["generated_from_url"] = website_url
-                # st.session_state["generated_file_path"] = result.get("file_path")
-                # st.session_state["generated_powerpoint_paths"] = result.get("powerpoint_paths", [])
-                # st.session_state["generated_png_image_paths"] = result.get("png_image_paths", [])
-                # st.session_state["generated_web_text"] = result.get("web_text", "")
-                # st.session_state["generated_placeholders"] = result.get("placeholders", [])
-                
-                # status_box.success("Generation complete. Redirecting to customize page...")
-                # st.switch_page("pages/customize.py")
+   
 
                 print(f"Response: {response.text}")
 
                 result = response.json()
-
-                # call convert endpoint for each generated pptx
-                #generated_pptx_paths = result.get("powerpoint_paths", [])
-                #converted_png_paths = []
-
-                # for pptx_path in generated_pptx_paths:
-                #     print("Calling convert endpoint for:", pptx_path)
-
-                # convert_response = requests.post(
-                #     f"{BACKEND_URL}/convert_pptx",
-                #     json={"path": pptx_path},
-                #     timeout=300
-                # )
-
-                # print("Convert status:", convert_response.status_code)
-                # print("Convert response:", convert_response.text)
-
-                # if convert_response.status_code != 200:
-                #     status_box.error(f"Convert failed for: {pptx_path}")
-                #     st.code(convert_response.text)
-                #     st.stop()
-
-                # try:
-                #     convert_result = convert_response.json()
-                #     png_path = convert_result.get("png_path")
-                #     if png_path:
-                #         converted_png_paths.append(png_path)
-                # except Exception:
-                #     pass
 
                 # save everything frontend needs
                 st.session_state["generated_result"] = result

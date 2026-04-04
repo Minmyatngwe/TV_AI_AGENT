@@ -96,7 +96,7 @@ if st.button("Apply Customization", type="primary", use_container_width=True):
             response = requests.post(
                 f"{BACKEND_URL}/cutomize",
                 json=payload,
-                timeout=300
+                timeout=600
             )
 
         if response.status_code != 200:
@@ -125,8 +125,6 @@ if st.button("Apply Customization", type="primary", use_container_width=True):
 
         st.success("Customization complete.")
         st.rerun()
-
-        st.success("Customization complete.")
 
     except requests.exceptions.Timeout:
         st.error("Customization request timed out.")
