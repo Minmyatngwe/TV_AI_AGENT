@@ -1,0 +1,110 @@
+.main-title {
+    font-size: 2.2rem;
+    font-weight: 700;
+    margin-bottom: 0.2rem;
+}
+
+.sub-title {
+    font-size: 1rem;
+    color: #666;
+    margin-bottom: 1.5rem;
+}
+
+.section-title {
+    font-size: 1.15rem;
+    font-weight: 600;
+    margin-top: 0.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.meta-text {
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.empty-box {
+    padding: 1.2rem;
+    border: 1px dashed #bbb;
+    border-radius: 12px;
+    color: #666;
+    background: #fafafa;
+}
+
+.layout-card {
+    padding: 0.75rem;
+    border-radius: 14px;
+    border: 1px solid #e6e6e6;
+    background: #ffffff;
+    margin-bottom: 1rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+}
+
+.placeholder-preview {
+    width: 100%;
+    min-height: 180px;
+    border-radius: 12px;
+    border: 1px dashed #cfcfcf;
+    background: linear-gradient(135deg, #f7f7f7, #eeeeee);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #777;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+}
+
+.tv-preview-marker {
+    display: none;
+}
+
+/* Make the real Streamlit container sticky */
+.stVerticalBlock:has(.tv-preview-marker) {
+    position: sticky;
+    top: 1.5rem;
+    align-self: flex-start;
+    max-height: calc(100vh - 2rem);
+    overflow-y: auto;
+    padding-right: 0.35rem;
+}
+
+.tv-frame {
+    background: #111;
+    border-radius: 24px;
+    padding: 14px;
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.22);
+    margin-bottom: 1rem;
+}
+
+.tv-placeholder {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    border-radius: 16px;
+    background: linear-gradient(135deg, #222, #333);
+    color: #f2f2f2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    font-weight: 600;
+    text-align: center;
+}
+
+.tv-frame [data-testid="stImage"] img {
+    border-radius: 16px;
+    width: 100%;
+    object-fit: contain;
+    background: #000;
+}
+
+.stVerticalBlock:has(.tv-preview-marker)::-webkit-scrollbar {
+    width: 8px;
+}
+
+.stVerticalBlock:has(.tv-preview-marker)::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.stVerticalBlock:has(.tv-preview-marker)::-webkit-scrollbar-thumb {
+    background: rgba(120, 120, 120, 0.35);
+    border-radius: 999px;
+}

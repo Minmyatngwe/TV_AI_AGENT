@@ -62,10 +62,24 @@ else:
 
 st.write("### Customize Content")
 
+# custom_prompt = st.text_area(
+#     "Enter customization prompt",
+#     placeholder="Example: Make the title shorter and more modern. Replace the image with a more technical one.",
+#     height=120,
+# )
+
+# selected_slide_path = None
+# if powerpoint_paths:
+    
+#     selected_slide_path = st.selectbox(
+#         "Choose PowerPoint to customize",
+#         options=[os.path.basename(i) for i in powerpoint_paths]
+#     )
+
 custom_prompt = st.text_area(
     "Enter customization prompt",
     placeholder="Example: Make the title shorter and more modern. Replace the image with a more technical one.",
-    height=120
+    height=120,
 )
 
 selected_slide_path = None
@@ -79,34 +93,44 @@ if powerpoint_paths:
         if os.path.basename(i)==choose:
             selected_slide_path=i
 
-if st.button("Apply Customization", type="primary", use_container_width=True):
-    if not custom_prompt.strip():
-        st.warning("Please enter a customization prompt.")
-        st.stop()
+with left_col:
 
-    if not selected_slide_path:
-        st.warning("No PowerPoint file selected.")
-        st.stop()
+    if st.button("Change image",type="primary"):
+        
+        try:
+            payload = {
+                "slide_path": [selected_slide_path],
+                "number": image_counter,
+                "ai_response": placeholders,
+                "file_path": file_path
+            }
+            print(payload)
+            with st.spinner("Changing image..."):
+                response = requests.post(
+                    f"{BACKEND_URL}/change_image",
+                    json=payload,
+                    timeout=600
+                )
 
-    try:
-        payload = {
-            "web_text": web_text,
-            "prompt": custom_prompt,
-            "placeholder": placeholders,
-            "slide_path": [selected_slide_path],
-            "file_path": file_path
-        }
+            if response.status_code != 200:
+                st.error(f"Backend error {response.status_code}")
+                st.code(response.text)
+                st.stop()
+            st.session_state["image_counter"]=response.json().get('image_counter',0)
 
-        with st.spinner("Applying customization..."):
-            response = requests.post(
-                f"{BACKEND_URL}/cutomize",
-                json=payload,
-                timeout=600
-            )
+            st.success("Customization complete.")
+            st.rerun()
+        except requests.exceptions.Timeout:
+            st.error("Customization request timed out.")
+        except requests.exceptions.RequestException as e:
+            st.error(f"Request failed: {e}")
+        except Exception as e:
+            st.error(f"Unexpected error: {e}")
 
-        if response.status_code != 200:
-            st.error(f"Backend error {response.status_code}")
-            st.code(response.text)
+with middle_col:
+    if st.button("Apply Customization", type="primary", use_container_width=True):
+        if not custom_prompt.strip():
+            st.warning("Please enter a customization prompt.")
             st.stop()
 
         st.session_state["generated_placeholders"]=response.json().get("ai_response")
@@ -142,16 +166,71 @@ if st.button("Chnage image",type="primary"):
             st.error(f"Backend error {response.status_code}")
             st.code(response.text)
             st.stop()
-        st.session_state["image_counter"]=response.json().get('image_counter',0)
 
-        st.success("Customization complete.")
-        st.rerun()
-    except requests.exceptions.Timeout:
-        st.error("Customization request timed out.")
-    except requests.exceptions.RequestException as e:
-        st.error(f"Request failed: {e}")
-    except Exception as e:
-        st.error(f"Unexpected error: {e}")
+        try:
+            payload = {
+                "web_text": web_text,
+                "prompt": custom_prompt,
+                "placeholder": placeholders,
+                "slide_path": [selected_slide_path],
+                "file_path": file_path
+            }
+
+            with st.spinner("Applying customization..."):
+                response = requests.post(
+                    f"{BACKEND_URL}/cutomize",
+                    json=payload,
+                    timeout=600
+                )
+
+            if response.status_code != 200:
+                st.error(f"Backend error {response.status_code}")
+                st.code(response.text)
+                st.stop()
+
+            st.success("Customization complete.")
+            st.rerun()
+
+        except requests.exceptions.Timeout:
+            st.error("Customization request timed out.")
+        except requests.exceptions.RequestException as e:
+            st.error(f"Request failed: {e}")
+        except Exception as e:
+            st.error(f"Unexpected error: {e}")
+
+with right_col:
+
+    if st.button("Publish",type="primary"):
+        
+        try:
+            payload = {
+                "slide_path": [selected_slide_path],
+                "number": image_counter,
+                "ai_response": placeholders,
+                "file_path": file_path
+            }
+            print(payload)
+            with st.spinner("Changing image..."):
+                response = requests.post(
+                    f"{BACKEND_URL}/change_image",
+                    json=payload,
+                    timeout=600
+                )
+
+            if response.status_code != 200:
+                st.error(f"Publish error {response.status_code}")
+                st.code(response.text)
+                st.stop()
+            st.session_state["image_counter"]=response.json().get('image_counter',0)
+
+            st.success("Publication complete.")
+            st.rerun()
+        except requests.exceptions.Timeout:
+            st.error("Publish request timed out.")
+        except requests.exceptions.RequestException as e:
+            st.error(f"Request failed: {e}")
+        except Exception as e:
+            st.error(f"Unexpected error: {e}")
 
 
     
