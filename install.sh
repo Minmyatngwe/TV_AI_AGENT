@@ -33,4 +33,5 @@ curl -fsSL https://ollama.com/install.sh | sh
 sudo apt-get update
 sudo apt-get install libreoffice poppler-utils
 #ollama pull qwen3.5:35b
-#ollama pull qwen3.5:35b
+ollama serve
+ollama pull qwen3.5:35b

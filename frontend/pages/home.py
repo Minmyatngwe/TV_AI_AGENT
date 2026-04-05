@@ -72,6 +72,9 @@ if "generated_placeholders" not in st.session_state:
     st.session_state["generated_placeholders"] = []
 
 
+if "image_counter" not in st.session_state:
+    st.session_state["image_counter"] = 0
+
 st.markdown('<div class="hero-title">Generate Layouts</div>', unsafe_allow_html=True)
 st.markdown(
     '<div class="hero-subtitle">Paste a link and upload one or more PPTX layout templates</div>',

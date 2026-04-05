@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from pydantic  import BaseModel
 from typing import List
-from ai_model import generate_template
+from ai_model import generate_template,convert_pptx_to_png,replace_placeholder_text
 from customize_model import customize_template
 import os
 import subprocess
@@ -24,7 +24,8 @@ def generate(template:Template):
     print(template.template_paths)
 
     file_path,powerpoint_paths,png_image_paths,web_text,placeholders=generate_template(template.link,template.template_paths)
-
+    print("generate ai response")
+    print(placeholders)
     return {
         "file_path":file_path,
         "powerpoint_paths":powerpoint_paths,
@@ -33,23 +34,30 @@ def generate(template:Template):
         "placeholders":placeholders
     }
 
-def convert_pptx_to_png(pptx_path):
+def convert_pptx_to_png_for_template(pptx_path):
     output_path=os.path.dirname(pptx_path)
     pdf_path = os.path.join(output_path, "pdf_files")
     os.makedirs(pdf_path, exist_ok=True)    
-    base_name = os.path.splitext(os.path.basename(pptx_path))[0]   
+    base_name = os.path.splitext(os.path.basename(pptx_path))[0] 
+    tempo_path=r"/tmp/pdf_tempo"  
+    os.makedirs(tempo_path,exist_ok=True) 
+    
     try:
         subprocess.run([
             "libreoffice", 
             "--headless", 
             "--convert-to", "pdf", 
-            "--outdir", pdf_path, 
+            "--outdir", tempo_path, 
             pptx_path
-        ], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        ], check=True,)
+        
     except subprocess.CalledProcessError as e:
         print(f"Error rendering PDF: {e}")
         return []    
+    temp_pdf_file = os.path.join(tempo_path, f"{base_name}.pdf")
+    
     pdf_file_path=os.path.join(pdf_path,f"{base_name}.pdf")
+    shutil.move(temp_pdf_file,pdf_file_path)
     try:
         images = convert_from_path(pdf_file_path, dpi=300)
     except Exception as e:
@@ -70,7 +78,7 @@ def convert_pptx_to_png(pptx_path):
 @app.post("/convert_pptx")
 def convert(path:PATH):
     print("covert is called")
-    convert_pptx_to_png(path.path)
+    convert_pptx_to_png_for_template(path.path)
     
 
 
@@ -84,10 +92,86 @@ class CUTOMIZE(BaseModel):
     
 @app.post("/cutomize")
 def cutomize_pptx(cutomize:CUTOMIZE):
-    customize_template(
+    print("citomize is called")
+    ai_response,powerpoint_path,image_path= customize_template(
         web_text=cutomize.web_text,
         prompt=cutomize.prompt,
         placeholder=cutomize.placeholder,
         slide_path=cutomize.slide_path,
         file_path=cutomize.file_path
     )
+    print("cutomize_ai_response")
+    print(ai_response)
+    return {
+        "powerpoint_paths":powerpoint_path,
+        "png_image_paths":image_path,
+        "ai_response":ai_response
+    }
+    
+class IMAGE(BaseModel):
+    slide_path:list
+    number:int
+    ai_response:list[dict]
+    file_path:str
+
+@app.post("/chnage_image")
+def chnage_image(image:IMAGE):
+    increment=False 
+    path=image.slide_path
+    number=image.number
+    ai_response=image.ai_response
+    file_path=image.file_path
+    base_name=os.path.basename(path[0])
+    parent_path=os.path.dirname(os.path.dirname(path[0]))
+    
+    files=os.listdir(parent_path)
+    images=[]
+    for i in files:
+        if i.endswith(".png") and not i.startswith("qr"):
+            images.append(i)
+    print("counter")
+    print(number)
+    if number>=len(images):
+        number=0
+        increment=True
+        
+
+    selected_image=images[number]
+    
+    # image_full_path=os.path.join(file_path,selected_image)
+    
+    for tempo_dict in ai_response:
+        for slide_name in tempo_dict:
+            if slide_name==base_name:
+                
+                for key in tempo_dict[slide_name]:
+                    print(key)
+                    if "image" in key:
+                        tempo_dict[slide_name][key]=selected_image
+    print("images",selected_image)
+    
+    print("\n\n ai response")
+    print(ai_response)
+    template_full_path=os.path.join("./template",base_name)
+
+    powerpoint_path=replace_placeholder_text([template_full_path],ai_response,file_path)[0]
+    convert_pptx_to_png(powerpoint_path)
+    if not increment:
+        number+=1
+    return{
+        "image_counter":number
+    }
+    
+    
+    
+    
+    
+    
+    
+            
+            
+    
+    
+    
+    
+    

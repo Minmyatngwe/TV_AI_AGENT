@@ -19,6 +19,7 @@ from pptx.enum.shapes import MSO_SHAPE_TYPE
 import ast 
 import subprocess
 from pdf2image import convert_from_path
+import shutil
 summarize_template=ChatPromptTemplate(
     [
         ("system",summarize_prompt),
@@ -169,40 +170,63 @@ def recursive_replace(shapes, ai_response, slide_name, folder_path):
 def replace_placeholder_text(slides_path,ai_response,file_path):
     powerpoint_file_path=[]
     for i,path in enumerate(slides_path):
-
         print(path)
         presentation=Presentation(path)
         slide_name=os.path.basename(path)
+        base_name=os.path.splitext(slide_name)[0]
         for slide in presentation.slides:
             recursive_replace(slide.shapes,ai_response,slide_name,file_path)
         powerpoint_save_path_parent=os.path.join(file_path,"powerpoint")
         os.makedirs(powerpoint_save_path_parent,exist_ok=True)
-        full_powerpoint_file_path=os.path.join(powerpoint_save_path_parent,f"slide_{i}.pptx")
+        full_powerpoint_file_path=os.path.join(powerpoint_save_path_parent,f"{base_name}.pptx")
         
         presentation.save(full_powerpoint_file_path)
         powerpoint_file_path.append(full_powerpoint_file_path)
     return powerpoint_file_path
         
         
-        
+
+
 
 def convert_pptx_to_png(pptx_path):
-    output_path=os.path.dirname(os.path.dirname(pptx_path))
+    # 1. Force the path to be absolute so LibreOffice doesn't get confused
+    abs_pptx_path = os.path.abspath(pptx_path)
+    
+    output_path = os.path.dirname(os.path.dirname(abs_pptx_path))
     pdf_path = os.path.join(output_path, "pdf_files")
     os.makedirs(pdf_path, exist_ok=True)    
-    base_name = os.path.splitext(os.path.basename(pptx_path))[0]   
+    
+    base_name = os.path.splitext(os.path.basename(abs_pptx_path))[0]
+    tempo_path = r"/tmp/pdf_tempo"  
+    os.makedirs(tempo_path, exist_ok=True) 
+    
     try:
+        # 2. Add the temporary profile argument back in!
+        profile_arg = f"-env:UserInstallation=file://{tempo_path}/profile"
+        
         subprocess.run([
             "libreoffice", 
+            profile_arg, 
             "--headless", 
             "--convert-to", "pdf", 
-            "--outdir", pdf_path, 
-            pptx_path
-        ], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            "--outdir", tempo_path, 
+            abs_pptx_path # Use the absolute path here
+        ], check=True)
+        
     except subprocess.CalledProcessError as e:
         print(f"Error rendering PDF: {e}")
         return []    
-    pdf_file_path=os.path.join(pdf_path,f"{base_name}.pdf")
+        
+    temp_pdf_file = os.path.join(tempo_path, f"{base_name}.pdf")
+    pdf_file_path = os.path.join(pdf_path, f"{base_name}.pdf")
+    
+    # 3. Safely move the file
+    if os.path.exists(temp_pdf_file):
+        shutil.move(temp_pdf_file, pdf_file_path)
+    else:
+        print("Error: The PDF was not found in the temp folder. LibreOffice failed silently.")
+        return []
+
     try:
         images = convert_from_path(pdf_file_path, dpi=300)
     except Exception as e:
@@ -211,6 +235,8 @@ def convert_pptx_to_png(pptx_path):
     
     image_path = os.path.join(output_path, "image")
     os.makedirs(image_path, exist_ok=True)    
+    
+    
     for i, image in enumerate(images):
         png_filename = f"{base_name}.png"
         png_full_path = os.path.join(image_path, png_filename)
@@ -219,6 +245,9 @@ def convert_pptx_to_png(pptx_path):
         print(f"Saved: {png_filename}")
             
     return png_full_path
+
+    
+
 def summarize(link,slides_path):
         global summarize_chain
         response=requests.get(link)
@@ -272,6 +301,7 @@ def summarize(link,slides_path):
                     "role":"user","content": f"Input list: {json_summarization}\n\nCandidate image file names:\n{filenames_text}\n\nReturn the full updated JSON list only.", "images": multi_images[:5]
                 }]
             )
+            
             qr_image=qrcode.make(link)
             
             qr_path=os.path.join(full_folder_path,"qr_code.png")

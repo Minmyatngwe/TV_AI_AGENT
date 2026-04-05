@@ -16,7 +16,7 @@ powerpoint_paths = st.session_state.get("generated_powerpoint_paths", [])
 png_image_paths = st.session_state.get("generated_png_image_paths", [])
 web_text = st.session_state.get("generated_web_text", "")
 placeholders = st.session_state.get("generated_placeholders", [])
-
+image_counter=st.session_state.get("image_counter") or 0
 if not generated_result:
     st.warning("No generated layout data found. Please generate layouts first.")
     if st.button("Go to Home", type="primary"):
@@ -32,25 +32,26 @@ if png_image_paths:
     
     cols = st.columns(2)
     for i, image_path in enumerate(png_image_paths):
+        slide_name=os.path.basename(image_path)
         real_path=Path(image_path)
         full_path=backend_path/real_path
         print(full_path)
         with cols[i % 2]:
-            st.image(full_path, caption=f"Layout {i+1}", use_container_width=True)
+            st.image(full_path, caption=slide_name, use_container_width=True)
 else:
     st.info("No preview images found.")
 
-st.write("### Generated PowerPoint Files")
-if powerpoint_paths:
-    for ppt in powerpoint_paths:
-        st.code(ppt)
-else:
-    st.info("No generated PowerPoint files found.")
+# st.write("### Generated PowerPoint Files")
+# if powerpoint_paths:
+#     for ppt in powerpoint_paths:
+#         st.code(ppt)
+# else:
+#     st.info("No generated PowerPoint files found.")
 
-st.write("### Source Web Text")
-if web_text:
-    with st.expander("Show extracted web text"):
-        st.write(web_text)
+# st.write("### Source Web Text")
+# if web_text:
+#     with st.expander("Show extracted web text"):
+#         st.write(web_text)
 
 #st.write("### Placeholder Data")
 #if placeholders:
@@ -69,9 +70,10 @@ custom_prompt = st.text_area(
 
 selected_slide_path = None
 if powerpoint_paths:
+    
     selected_slide_path = st.selectbox(
         "Choose PowerPoint to customize",
-        options=powerpoint_paths
+        options=[os.path.basename(i) for i in powerpoint_paths]
     )
 
 if st.button("Apply Customization", type="primary", use_container_width=True):
@@ -104,25 +106,6 @@ if st.button("Apply Customization", type="primary", use_container_width=True):
             st.code(response.text)
             st.stop()
 
-        customize_result = response.json()
-        st.session_state["customize_result"] = customize_result
-
-        convert_response = requests.post(
-            f"{BACKEND_URL}/convert_pptx",
-            json={"path": selected_slide_path},
-            timeout=300
-        )
-
-        if convert_response.status_code != 200:
-            st.warning("Customization completed, but preview image conversion failed.")
-        else:
-            # backend does not return image path, so build it manually
-            output_dir = os.path.dirname(selected_slide_path)
-            base_name = os.path.splitext(os.path.basename(selected_slide_path))[0]
-            converted_png_path = os.path.join(output_dir, "image", f"{base_name}.png")
-
-            st.session_state["customized_preview_path"] = converted_png_path
-
         st.success("Customization complete.")
         st.rerun()
 
@@ -133,6 +116,41 @@ if st.button("Apply Customization", type="primary", use_container_width=True):
     except Exception as e:
         st.error(f"Unexpected error: {e}")
 
+
+if st.button("Chnage image",type="primary"):
+    
+    try:
+        payload = {
+            "slide_path": [selected_slide_path],
+            "number": image_counter,
+            "ai_response": placeholders,
+            "file_path": file_path
+        }
+        print(payload)
+        with st.spinner("Channging image..."):
+            response = requests.post(
+                f"{BACKEND_URL}/chnage_image",
+                json=payload,
+                timeout=600
+            )
+
+        if response.status_code != 200:
+            st.error(f"Backend error {response.status_code}")
+            st.code(response.text)
+            st.stop()
+        st.session_state["image_counter"]=response.json().get('image_counter',0)
+
+        st.success("Customization complete.")
+        st.rerun()
+    except requests.exceptions.Timeout:
+        st.error("Customization request timed out.")
+    except requests.exceptions.RequestException as e:
+        st.error(f"Request failed: {e}")
+    except Exception as e:
+        st.error(f"Unexpected error: {e}")
+
+
+    
 
 if st.button("Back to Home", type="secondary"):
     st.switch_page("pages/home.py")
