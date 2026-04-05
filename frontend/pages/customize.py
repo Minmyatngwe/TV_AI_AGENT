@@ -93,6 +93,7 @@ if powerpoint_paths:
         if os.path.basename(i)==choose:
             selected_slide_path=i
 
+left_col, sp1, middle_col, sp, right_col = st.columns([20,28,20,40,10])
 with left_col:
 
     if st.button("Change image",type="primary"):
@@ -137,67 +138,6 @@ with middle_col:
         st.success("Customization complete.")
         st.rerun()
 
-    except requests.exceptions.Timeout:
-        st.error("Customization request timed out.")
-    except requests.exceptions.RequestException as e:
-        st.error(f"Request failed: {e}")
-    except Exception as e:
-        st.error(f"Unexpected error: {e}")
-
-
-if st.button("Chnage image",type="primary"):
-    
-    try:
-        payload = {
-            "slide_path": [selected_slide_path],
-            "number": image_counter,
-            "ai_response": placeholders,
-            "file_path": file_path
-        }
-        print(payload)
-        with st.spinner("Channging image..."):
-            response = requests.post(
-                f"{BACKEND_URL}/chnage_image",
-                json=payload,
-                timeout=600
-            )
-
-        if response.status_code != 200:
-            st.error(f"Backend error {response.status_code}")
-            st.code(response.text)
-            st.stop()
-
-        try:
-            payload = {
-                "web_text": web_text,
-                "prompt": custom_prompt,
-                "placeholder": placeholders,
-                "slide_path": [selected_slide_path],
-                "file_path": file_path
-            }
-
-            with st.spinner("Applying customization..."):
-                response = requests.post(
-                    f"{BACKEND_URL}/cutomize",
-                    json=payload,
-                    timeout=600
-                )
-
-            if response.status_code != 200:
-                st.error(f"Backend error {response.status_code}")
-                st.code(response.text)
-                st.stop()
-
-            st.success("Customization complete.")
-            st.rerun()
-
-        except requests.exceptions.Timeout:
-            st.error("Customization request timed out.")
-        except requests.exceptions.RequestException as e:
-            st.error(f"Request failed: {e}")
-        except Exception as e:
-            st.error(f"Unexpected error: {e}")
-
 with right_col:
 
     if st.button("Publish",type="primary"):
@@ -210,9 +150,9 @@ with right_col:
                 "file_path": file_path
             }
             print(payload)
-            with st.spinner("Changing image..."):
+            with st.spinner("Publishing..."):
                 response = requests.post(
-                    f"{BACKEND_URL}/change_image",
+                    f"{BACKEND_URL}/publish", # fake endpoint for testing
                     json=payload,
                     timeout=600
                 )
