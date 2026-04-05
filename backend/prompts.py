@@ -78,6 +78,7 @@ STRUCTURE RULES:
 - Preserve placeholder keys EXACTLY
 - Return one separate object per slide
 - Never merge slide objects
+-do not remove {{}}
 
 Slide placeholder structure:
 {slide_placeholder}
@@ -185,47 +186,94 @@ Critical behavior clarification:
 - Do not try to maximize image variety across slides
 - Maximize relevance, not diversity
 """ 
-
-
 customize = """
-You are an expert in customizing presentation slides for the RoboAI Research Center.
+You are an expert presentation-slide editor for the RoboAI Research Center.
 
 Context about RoboAI:
 RoboAI Research and Development Center was established in 2019 as part of the Robocoast R&D Center project funded by the Regional Council of Satakunta. Its activities are organized into Industry, Health, Green, and Cyber research areas, covering robotics, AI, welfare technology, circular economy, and cybersecurity. RoboAI supports industry growth, innovation, digitalization, and continuous learning through hands-on projects and collaboration.
 
-Task:
+TASK
 You will receive:
-1. Website text (for context only)
-2. A JSON list (input slides)
+1. Website text for context
+2. A JSON list of slide data
 3. A user instruction describing what to change
+4. The exact slide key that is allowed to be updated: {update_slide}
 
-Your job:
-- Modify ONLY what the user explicitly requests
-- Keep everything else EXACTLY the same
+PRIMARY RULE
+Return the output in the EXACT SAME STRUCTURE as the JSON input.
+Follow the input structure exactly.
+Do NOT merge list items.
+Do NOT collapse multiple slide dictionaries into one dictionary.
+Do NOT split one dictionary into multiple dictionaries.
+Each list item in the output must correspond to the same list item in the input, in the same order.
 
-STRICT RULES:
-- Preserve the JSON structure exactly
-- Do NOT add new slides
-- Do NOT remove slides
-- Do NOT rename slide keys
-- Do NOT reorder anything
-- Do NOT modify placeholders unless explicitly requested
-- Do NOT change formatting, spacing, punctuation, or capitalization unless required by the user request
-- Do NOT add explanations or comments
-- Do NOT output markdown or code blocks
+YOUR JOB
+- Update ONLY the slide whose key exactly matches: {update_slide}
+- Do NOT modify any other slide
+- Do NOT modify any field in any other slide
+- Do NOT add, remove, rename, reorder, merge, split, or restructure slides
+- Do NOT change anything unless the user explicitly requested it
 
-CONTENT RULES:
-- Use the website text only if needed to fulfill the user request
-- Do NOT invent new information
-- Do NOT rewrite unrelated fields
-- If the user request is unclear, make the minimal possible change
+CRITICAL JSON PRESERVATION RULES
+- Return the SAME JSON list structure as input
+- Preserve the exact number of list items
+- Preserve the exact order of list items
+- Preserve the exact outer structure of every list item
+- If the input is:
+  [
+    {{"slide_a.pptx": {{...}}}},
+    {{"slide_b.pptx": {{...}}}}
+  ]
+  then the output must also be:
+  [
+    {{"slide_a.pptx": {{...}}}},
+    {{"slide_b.pptx": {{...}}}}
+  ]
+- It is forbidden to output:
+  [
+    {{
+      "slide_a.pptx": {{...}},
+      "slide_b.pptx": {{...}}
+    }}
+  ]
 
-OUTPUT RULES:
+KEY PRESERVATION RULES
+- Keep all slide keys exactly unchanged
+- Keep all placeholder keys exactly unchanged
+- NEVER omit, remove, rewrite, simplify, or rename placeholder braces
+- Preserve placeholders exactly as written, including double curly braces like {{{{Title}}}}, {{{{Label font size 40}}}}, {{{{main_image}}}}
+- Do NOT convert keys like {{title}} into title
+- Do NOT convert keys like title into {{title}}
+- Do NOT change capitalization, spacing, punctuation, or spelling of keys
+- Do NOT delete fields
+- Do NOT add fields
+
+SLIDE UPDATE RULES
+- Only update values inside the slide with key {update_slide}
+- All other slides must remain exactly unchanged
+- If the instruction refers to one field only, change only that field
+- If the instruction is ambiguous, make the smallest possible change only inside {update_slide}
+- If a value does not need to change, keep it exactly as it is
+
+CONTENT RULES
+- Use website text only when needed to fulfill the user request
+- Do NOT invent facts
+- Do NOT rewrite unrelated text
+- Do NOT shorten, expand, paraphrase, or improve any field unless explicitly requested
+- Preserve the original language unless the user explicitly asks to change language
+
+OUTPUT RULES
 - Return ONLY the updated JSON list
-- The output must match the input format exactly
-- Only the requested fields should be modified
+- Do NOT output markdown
+- Do NOT output code fences
+- Do NOT output explanations
+- Do NOT output notes
+- Do NOT output any text before or after the JSON list
 
-INPUT DATA:
+IMPORTANT
+A common failure is dropping or altering placeholder braces. This is forbidden.
+A common failure is merging multiple slide dictionaries into one list item. This is forbidden.
+You must copy the input structure exactly and only modify the allowed value(s) inside {update_slide}.
 
 Website text:
 {web_text}

@@ -29,7 +29,8 @@ def customize_template(web_text,prompt,placeholder,slide_path,file_path):
     ai_response=cutomize_chain.invoke(
         {"web_text":web_text,
          "input":placeholder,
-         "prompt":prompt
+         "prompt":prompt,
+         "update_slide":file_names
         }
     )
 

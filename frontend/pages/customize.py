@@ -71,10 +71,13 @@ custom_prompt = st.text_area(
 selected_slide_path = None
 if powerpoint_paths:
     
-    selected_slide_path = st.selectbox(
+    choose  = st.selectbox(
         "Choose PowerPoint to customize",
         options=[os.path.basename(i) for i in powerpoint_paths]
     )
+    for i in powerpoint_paths:
+        if os.path.basename(i)==choose:
+            selected_slide_path=i
 
 if st.button("Apply Customization", type="primary", use_container_width=True):
     if not custom_prompt.strip():
@@ -106,6 +109,7 @@ if st.button("Apply Customization", type="primary", use_container_width=True):
             st.code(response.text)
             st.stop()
 
+        st.session_state["generated_placeholders"]=response.json().get("ai_response")
         st.success("Customization complete.")
         st.rerun()
 
