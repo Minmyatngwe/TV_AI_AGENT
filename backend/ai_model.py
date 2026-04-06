@@ -255,7 +255,7 @@ def summarize(link,slides_path):
         text=soup.text
         text_clean=re.sub(r"\n+","\n",text)
         
-        images=soup.find_all('img',class_="fl-photo-img")
+        images = soup.select('img.fl-photo-img, img[class*="wp-image"]')
 
         slide_placeholders=get_placeholder_name(slides_path)
         print(slide_placeholders)

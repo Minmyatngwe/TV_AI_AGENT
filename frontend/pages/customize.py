@@ -94,8 +94,12 @@ if powerpoint_paths:
             selected_slide_path=i
 
 left_col, sp1, middle_col, sp, right_col = st.columns([20,28,20,40,10])
-with left_col:
 
+    
+    
+    
+    
+with left_col:
     if st.button("Change image",type="primary"):
         
         try:
@@ -133,6 +137,25 @@ with middle_col:
         if not custom_prompt.strip():
             st.warning("Please enter a customization prompt.")
             st.stop()
+        payload = {
+            "web_text":web_text,
+            "prompt":custom_prompt,
+            "placeholder":placeholders,
+            "slide_path": [selected_slide_path],
+            "file_path": file_path
+        }
+        print(payload)
+        with st.spinner("Applying customization..."):
+            response = requests.post(
+                f"{BACKEND_URL}/cutomize",
+                json=payload,
+                timeout=600
+            )
+        if response.status_code != 200:
+            st.error(f"Backend error {response.status_code}")
+            st.code(response.text)
+            st.stop()
+
 
         st.session_state["generated_placeholders"]=response.json().get("ai_response")
         st.success("Customization complete.")
@@ -171,9 +194,6 @@ with right_col:
             st.error(f"Request failed: {e}")
         except Exception as e:
             st.error(f"Unexpected error: {e}")
-
-
-    
 
 if st.button("Back to Home", type="secondary"):
     st.switch_page("pages/home.py")

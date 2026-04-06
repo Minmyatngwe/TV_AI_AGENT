@@ -114,7 +114,7 @@ class IMAGE(BaseModel):
     ai_response:list[dict]
     file_path:str
 
-@app.post("/chnage_image")
+@app.post("/change_image")
 def chnage_image(image:IMAGE):
     increment=False 
     path=image.slide_path
