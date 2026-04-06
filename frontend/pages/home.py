@@ -262,3 +262,28 @@ with center_col:
             accept_multiple_files=True,
             key="template_files_url"
         )
+        if st.button("Uploade",type="primary"):
+            for file in uploaded_template_files:
+                    pptx_path=os.path.join("../backend/template",file.name)
+                    with open(pptx_path,"wb") as f:
+                        f.write(file.getbuffer())
+                    
+                    payload={
+                            "path":os.path.join("./template",file.name)
+                        }
+                    with st.spinner("Generating layouts... Please wait..."):
+                        response = requests.post(
+                            f"{BACKEND_URL}/convert_pptx",
+                            json=payload,
+                            timeout=800
+                        )
+                    if response.status_code != 200:
+                        status_box.error("Generation failed.")
+                        st.error(f"Backend error {response.status_code}")
+                        st.code(response.text)
+                        st.stop()
+                    st.write(f"saved {file.name}")
+            st.rerun()
+
+                        
+                    

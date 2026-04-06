@@ -6,7 +6,7 @@ from customize_model import customize_template
 import os
 import subprocess
 from pdf2image import convert_from_path
-
+import shutil
 app=FastAPI()
 
 class Template(BaseModel):
@@ -35,22 +35,29 @@ def generate(template:Template):
     }
 
 def convert_pptx_to_png_for_template(pptx_path):
-    output_path=os.path.dirname(pptx_path)
-    pdf_path = os.path.join(output_path, "pdf_files")
+    abs_pptx_path=os.path.abspath(pptx_path)
+    parent_path=os.path.dirname(abs_pptx_path)
+    pdf_path = os.path.join(parent_path, "pdf_files")
     os.makedirs(pdf_path, exist_ok=True)    
-    base_name = os.path.splitext(os.path.basename(pptx_path))[0] 
+    base_name = os.path.splitext(os.path.basename(abs_pptx_path))[0] 
+    image_path=os.path.join(parent_path,"image")
+    os.makedirs(image_path,exist_ok=True)
     tempo_path=r"/tmp/pdf_tempo"  
     os.makedirs(tempo_path,exist_ok=True) 
-    
     try:
+        # 2. Add the temporary profile argument back in!
+        profile_arg = f"-env:UserInstallation=file://{tempo_path}/profile"
+        
         subprocess.run([
             "libreoffice", 
+            profile_arg, 
             "--headless", 
             "--convert-to", "pdf", 
             "--outdir", tempo_path, 
-            pptx_path
-        ], check=True,)
+            abs_pptx_path
+        ], check=True)
         
+
     except subprocess.CalledProcessError as e:
         print(f"Error rendering PDF: {e}")
         return []    
@@ -64,8 +71,6 @@ def convert_pptx_to_png_for_template(pptx_path):
         print(f"Error converting PDF to images: {e}")
         return []
     
-    image_path = os.path.join(output_path, "image")
-    os.makedirs(image_path, exist_ok=True)    
     for i, image in enumerate(images):
         png_filename = f"{base_name}.png"
         png_full_path = os.path.join(image_path, png_filename)
