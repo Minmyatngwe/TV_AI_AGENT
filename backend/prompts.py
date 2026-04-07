@@ -14,7 +14,7 @@ Important:
 - Use the exact slide names provided in the slide placeholder structure
 - Use the exact placeholder keys provided for each slide
 - If only one slide is provided, return only one slide object
-- The LAST element of the array must be a short, URL-friendly string (using underscores, no spaces)
+- The LAST element of the array must be a short, URL-friendly string using underscores and no spaces
 
 Core Rules:
 1. Use the same language as the input text
@@ -28,57 +28,99 @@ Core Rules:
 9. Output must be valid JSON only
 10. Do not output markdown
 11. Do not use line breaks inside JSON string values
+12. Never remove or change placeholder keys
+13. Never remove curly braces {{}} if they are part of the placeholder key text
 
-CRITICAL LAYOUT RULES (MANDATORY):
-- Layout constraints override all other rules, including copying the full headline
-- You MUST strictly follow font size and row/line limits in placeholder keys
-- NEVER exceed the visual capacity implied by the placeholder
+CRITICAL LAYOUT RULES:
+- Layout constraints override completeness
+- A shorter text that fits is always better than a longer text that overflows
+- You MUST estimate text length from the placeholder description
+- Never use the full original headline if it does not fit visually
+- Prefer compact, factual, readable phrasing
 
-Interpretation rules:
-- Larger font size → much shorter text
-- Smaller font size → more text allowed
-- Fewer rows → shorter text
-- More rows → more detail allowed
+FIT ESTIMATION RULES:
+You must estimate how much text fits based on:
+1. font size
+2. maximum rows
+3. textbox width if mentioned in the placeholder key
+4. language length tendency
 
-STRICT TEXT LIMIT GUIDELINES:
-- Font size ≥ 60 (e.g. Title 70, max 2 rows):
-  → Maximum 3–6 words
-  → NEVER use full long headline
-  → MUST shorten aggressively while keeping meaning
+Width categories:
+- narrow = small text box
+- medium = normal text box
+- wide = large text box
 
-- Font size ~30–40 (e.g. Lead paragraph max 34, 4 rows):
-  → 1–2 short sentences
-  → Keep concise and readable
+If width is not explicitly stated, assume:
+- Title = medium
+- Label = narrow
+- Subtitle = medium
+- Lead paragraph = medium
+- More information = medium
+- Call out text = medium
 
-- Font size ≤ 25 (body / more information, 5 rows):
-  → Allow more detail
-  → Max 2–3 short sentences
+CHARACTER CAPACITY HEURISTIC PER LINE:
+For wide text boxes:
+- font size 65–75: 18–26 chars per line
+- font size 35–45: 40–55 chars per line
+- font size 24–30: 55–75 chars per line
 
-TITLE RULE (UPDATED):
-- Use the original headline ONLY if it fits the layout
-- If too long, shorten it while preserving core meaning
-- NEVER overflow placeholder constraints
+For medium text boxes:
+- font size 65–75: 12–18 chars per line
+- font size 35–45: 28–40 chars per line
+- font size 24–30: 38–55 chars per line
 
-WRITING STYLE:
-- Prefer short, dense, factual phrasing
-- Avoid unnecessary words
-- Prioritize readability and visual fit over completeness
-- Do NOT try to include all information if space is limited
+For narrow text boxes:
+- font size 65–75: 8–12 chars per line
+- font size 35–45: 18–28 chars per line
+- font size 24–30: 28–38 chars per line
+
+TOTAL TEXT CAPACITY RULE:
+- Estimated max characters = chars per line × max rows
+- Use only 80% of estimated capacity for safety
+- If the language is Finnish or another long-word language, use only 70% of estimated capacity
+- If unsure, choose shorter text
+
+MANDATORY SHORTENING RULE:
+If text is too long:
+1. Keep only the core topic
+2. Remove repeated context
+3. Remove dates unless essential
+4. Remove long descriptive clauses
+5. Prefer shorter synonyms
+6. Turn full headlines into short slide headlines
 
 PLACEHOLDER INTERPRETATION:
-- Infer meaning from placeholder key text:
-  - "Title" → very short headline
-  - "Subtitle" → short factual phrase
-  - "Lead paragraph" → short explanation
-  - "More information" → compact detailed summary
-  - "Label" → 1–2 words
-  - "Call out text" → very short CTA (1–4 words)
+- "Title" = very short headline
+- "Subtitle" = short supporting phrase
+- "Lead paragraph" = concise summary
+- "More information" = compact supporting detail
+- "Label" = 1–2 words
+- "Call out text" = very short CTA
+- "Description" = concise body text
 
-STRUCTURE RULES:
-- Preserve placeholder keys EXACTLY
+SAFE DEFAULTS IF THE PLACEHOLDER ONLY GIVES FONT SIZE AND ROWS:
+- Title, font size around 70, max 2 rows:
+  target 3–5 words, usually 18–26 total characters
+- Label, font size around 40, 1 row:
+  target 1–2 words, usually 8–14 total characters
+- Subtitle, font size around 30–40:
+  target short phrase, usually 25–45 total characters
+- Lead paragraph, font size around 34, max 4 rows:
+  target 1–2 short sentences, usually 70–110 total characters
+- More information, font size around 25, max 5 rows:
+  target 2 short sentences, usually 120–180 total characters
+- Call out text, font size around 27, max 2 rows:
+  target 1–4 words, usually 12–28 total characters
+
+STRICT OUTPUT RULES:
+- Preserve slide names exactly
+- Preserve placeholder keys exactly
 - Return one separate object per slide
-- Never merge slide objects
--do not remove {{}}
+- Never merge slides
+- Never add new keys except "language" in the first slide object
+- If content does not fit the placeholder, shorten it
+- If content still cannot fit safely, return a shorter factual fragment rather than a complete sentence
+- For image placeholders, return null only
 
 Slide placeholder structure:
 {slide_placeholder}
@@ -95,7 +137,7 @@ Required output pattern:
   "short_relevant_folder_name"
 ]
 
-Return exactly one object per input slide. No more, no less.
+Return exactly one object per input slide, followed by the short folder name string as the last element.
 """
 
 selecting_image_prompt = """
