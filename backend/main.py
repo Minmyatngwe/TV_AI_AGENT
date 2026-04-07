@@ -7,6 +7,8 @@ import os
 import subprocess
 from pdf2image import convert_from_path
 import shutil
+import imageio.v3 as iio
+
 app=FastAPI()
 
 class Template(BaseModel):
@@ -167,6 +169,35 @@ def chnage_image(image:IMAGE):
         "image_counter":number
     }
     
+class DOWNLOAD(BaseModel):
+    path:str
+    duration:int    
+    
+@app.post("/download")
+def download_video(path:DOWNLOAD):
+
+    parent_path=os.path.dirname(os.path.dirname(path.path))
+    print(parent_path)
+    file_name=os.path.splitext(os.path.basename(path.path))[0]
+    
+    video_path=os.path.join(parent_path,"videos")
+    image_full_path=os.path.join(parent_path,"image",f"{file_name}.png")
+    
+    
+    os.makedirs(video_path,exist_ok=True)
+    
+    img = iio.imread(image_full_path)
+    
+    actual_duration=30*path.duration
+    
+    frames=[img for _ in range(actual_duration)]
+    
+    video_output_path=os.path.join(video_path,f"{file_name}.mp4")
+    iio.imwrite(video_output_path, frames, fps=30)
+    return {
+        "video_path":os.path.abspath(video_output_path)
+    }
+
     
     
     

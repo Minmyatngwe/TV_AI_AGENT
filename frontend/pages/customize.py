@@ -2,6 +2,7 @@ import streamlit as st
 import requests
 import os
 from pathlib import Path
+
 BACKEND_URL = "http://127.0.0.1:8000"
 
 st.markdown('<div class="hero-title">Customize Layouts</div>', unsafe_allow_html=True)
@@ -17,6 +18,10 @@ png_image_paths = st.session_state.get("generated_png_image_paths", [])
 web_text = st.session_state.get("generated_web_text", "")
 placeholders = st.session_state.get("generated_placeholders", [])
 image_counter=st.session_state.get("image_counter") or 0
+
+if "show_form" not in st.session_state:
+    st.session_state.show_form = False
+
 if not generated_result:
     st.warning("No generated layout data found. Please generate layouts first.")
     if st.button("Go to Home", type="primary"):
@@ -94,10 +99,6 @@ if powerpoint_paths:
             selected_slide_path=i
 
 left_col, sp1, middle_col, sp, right_col = st.columns([20,28,20,40,10])
-
-    
-    
-    
     
 with left_col:
     if st.button("Change image",type="primary"):
@@ -161,39 +162,39 @@ with middle_col:
         st.success("Customization complete.")
         st.rerun()
 
-with right_col:
+@st.dialog("Enter video settings")
+def video_dialog():
+    duration = st.number_input("Duration", 0, 10, 1)
+    if st.button("OK"):
+        payload = {
+            "path": selected_slide_path,
+            "duration": duration,
+        }
 
-    if st.button("Publish",type="primary"):
+        response = requests.post(f"{BACKEND_URL}/download", json=payload, timeout=600)
+
+        if response.status_code == 200:
+            video_path = response.json()["video_path"]
+        else:
+            st.error(response.text)
         
-        try:
-            payload = {
-                "slide_path": [selected_slide_path],
-                "number": image_counter,
-                "ai_response": placeholders,
-                "file_path": file_path
-            }
-            print(payload)
-            with st.spinner("Publishing..."):
-                response = requests.post(
-                    f"{BACKEND_URL}/publish", # fake endpoint for testing
-                    json=payload,
-                    timeout=600
-                )
+        with open(video_path, "rb") as f:
+            st.download_button(
+                label="Download video",
+                data=f.read(),
+                file_name="my_video.mp4",
+                mime="video/mp4"
+            )
+            
+        
 
-            if response.status_code != 200:
-                st.error(f"Publish error {response.status_code}")
-                st.code(response.text)
-                st.stop()
-            st.session_state["image_counter"]=response.json().get('image_counter',0)
 
-            st.success("Publication complete.")
-            st.rerun()
-        except requests.exceptions.Timeout:
-            st.error("Publish request timed out.")
-        except requests.exceptions.RequestException as e:
-            st.error(f"Request failed: {e}")
-        except Exception as e:
-            st.error(f"Unexpected error: {e}")
+
+with right_col:
+    if st.button("Download",type="primary"):
+        video_dialog()
+        
+    
 
 if st.button("Back to Home", type="secondary"):
     st.switch_page("pages/home.py")

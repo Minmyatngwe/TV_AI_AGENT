@@ -17,7 +17,7 @@ st.logo("logos/roboai.png", size="large")
 pg = st.navigation([
     st.Page("pages/home.py", title="Home", icon=":material/home:"),
     st.Page("pages/customize.py", title="Customize", icon=":material/brush:"),
-    st.Page("pages/library.py", title="Library", icon=":material/library_books:"),
+    st.Page("pages/download.py", title="Library", icon=":material/library_books:"),
 ])
 
 pg.run()

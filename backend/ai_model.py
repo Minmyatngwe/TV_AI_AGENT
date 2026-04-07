@@ -20,6 +20,8 @@ import ast
 import subprocess
 from pdf2image import convert_from_path
 import shutil
+import traceback
+
 summarize_template=ChatPromptTemplate(
     [
         ("system",summarize_prompt),
@@ -255,7 +257,7 @@ def summarize(link,slides_path):
         text=soup.text
         text_clean=re.sub(r"\n+","\n",text)
         
-        images = soup.select('img.fl-photo-img, img[class*="wp-image"]')
+        images = soup.select('div[class*="fl-photo-img-"]')
 
         slide_placeholders=get_placeholder_name(slides_path)
         print(slide_placeholders)
@@ -270,16 +272,15 @@ def summarize(link,slides_path):
             os.makedirs(full_folder_path,exist_ok=True)
             print(f"THe folder is saved to the {full_folder_path}")
 
-            for j,i in enumerate(images):
-                im=i.get("data-src")
-                if im==None:
-                    im=i.get("src")
-                re_image=requests.get(im)
+            for j,div in enumerate(images):
+                a_tag=div.find('a')
+                if a_tag:
+                    re_image=requests.get(a_tag['href'])
 
-                download_path=f"download_image{j}.png"
-                print(im)
-                with open(os.path.join(full_folder_path,download_path),"wb") as d:
-                    d.write(re_image.content)
+                    download_path=f"download_image{j}.png"
+                    print(re_image)
+                    with open(os.path.join(full_folder_path,download_path),"wb") as d:
+                        d.write(re_image.content)
             files_names=[]
             multi_images=[]
             for i in os.listdir(full_folder_path):
@@ -310,8 +311,9 @@ def summarize(link,slides_path):
 
             return agent_2_response['message']['content'],full_folder_path,text_clean
         except Exception as e:
-            return e
-
+            print("ERROR IN summarize():", e)
+            traceback.print_exc()
+            raise
 def generate_template(link,slides_path):
     
     try:
