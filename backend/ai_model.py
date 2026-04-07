@@ -62,18 +62,18 @@ def extract_from_shapes(shapes, placeholder_list):
         elif shape.has_text_frame:
             for paragraph in shape.text_frame.paragraphs:
                 clean_text = paragraph.text.strip()
-                if clean_text.startswith("{{") and clean_text.endswith("}}"):
-                    full_placeholder = ""
-                    for i,run in enumerate(paragraph.runs):
-                        if i<1:
-                            full_placeholder=run.text
-                        else:
-                            raise ValueError("Only one style is allow per text shape")
+                # if clean_text.startswith("{{") and clean_text.endswith("}}"):
+                #     full_placeholder = ""
+                #     for i,run in enumerate(paragraph.runs):
+                #         if i<1:
+                #             full_placeholder=run.text
+                #         else:
+                #             raise ValueError("Only one style is allow per text shape")
                         
+                #     placeholder_list.append(full_placeholder)
+                if clean_text.startswith("{{") and clean_text.endswith("}}"):
+                    full_placeholder = "".join(run.text for run in paragraph.runs).strip()
                     placeholder_list.append(full_placeholder)
-                            
-                                                
-
 def get_placeholder_name(slides_path):
     print("Processing slides...")
     slide_placeholder = {}
@@ -157,6 +157,18 @@ def recursive_replace(shapes, ai_response, slide_name, folder_path):
             continue
 
         # text replacement
+        # if shape.has_text_frame:
+        #     for paragraph in shape.text_frame.paragraphs:
+        #         clean_text = normalize_placeholder(paragraph.text)
+
+        #         if clean_text.startswith("{{") and clean_text.endswith("}}"):
+        #             replacement = (
+        #                 normalized_map.get(clean_text)
+        #                 or normalized_map.get(clean_text[2:-2].strip())
+        #             )
+
+        #             if replacement is not None and len(paragraph.runs) == 1:
+        #                 paragraph.runs[0].text = str(replacement)             
         if shape.has_text_frame:
             for paragraph in shape.text_frame.paragraphs:
                 clean_text = normalize_placeholder(paragraph.text)
@@ -167,8 +179,10 @@ def recursive_replace(shapes, ai_response, slide_name, folder_path):
                         or normalized_map.get(clean_text[2:-2].strip())
                     )
 
-                    if replacement is not None and len(paragraph.runs) == 1:
-                        paragraph.runs[0].text = str(replacement)                        
+                    if replacement is not None and len(paragraph.runs) > 0:
+                        paragraph.runs[0].text = str(replacement)
+                        for run in paragraph.runs[1:]:
+                            run.text = ""           
 def replace_placeholder_text(slides_path,ai_response,file_path):
     powerpoint_file_path=[]
     for i,path in enumerate(slides_path):
