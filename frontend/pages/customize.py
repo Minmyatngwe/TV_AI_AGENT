@@ -2,7 +2,8 @@ import streamlit as st
 import requests
 import os
 from pathlib import Path
-
+import io 
+import zipfile
 BACKEND_URL = "http://127.0.0.1:8000"
 
 st.markdown('<div class="hero-title">Customize Layouts</div>', unsafe_allow_html=True)
@@ -177,14 +178,22 @@ def video_dialog():
             video_path = response.json()["video_path"]
         else:
             st.error(response.text)
+        powerpoint_path=os.path.dirname(os.path.dirname(video_path))
+        powerpoint_full_path=os.path.join(powerpoint_path,"powerpoint",os.path.basename(selected_slide_path))
+        zip_buffer=io.BytesIO()
+        with zipfile.ZipFile(zip_buffer,"w",zipfile.ZIP_DEFLATED) as zip_file:
+            zip_file.write(video_path,arcname=os.path.basename(video_path))
+            zip_file.write(powerpoint_full_path,arcname=os.path.basename(powerpoint_full_path))
+        zip_buffer.seek(0)
+            
+        st.download_button(
+            label="Download video + PowerPoint",
+            data=zip_buffer,
+            file_name="zip_file.zip",
+            mime="application/zip"
+        )
+
         
-        with open(video_path, "rb") as f:
-            st.download_button(
-                label="Download video",
-                data=f.read(),
-                file_name="my_video.mp4",
-                mime="video/mp4"
-            )
             
         
 

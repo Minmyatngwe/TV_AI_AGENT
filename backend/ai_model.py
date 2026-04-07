@@ -271,16 +271,31 @@ def summarize(link,slides_path):
             full_folder_path=os.path.join("./output",folder_name)
             os.makedirs(full_folder_path,exist_ok=True)
             print(f"THe folder is saved to the {full_folder_path}")
+            image_counter = 0
 
-            for j,div in enumerate(images):
-                a_tag=div.find('a')
+            for j, div in enumerate(images):
+                a_tag = div.find("a")
+                image_tag = div.find("img")
+                image_url = None
+
                 if a_tag:
-                    re_image=requests.get(a_tag['href'])
+                    image_url = a_tag.get("href")
+                elif image_tag:
+                    image_url = image_tag.get("data-src") or image_tag.get("src")
 
-                    download_path=f"download_image{j}.png"
-                    print(re_image)
-                    with open(os.path.join(full_folder_path,download_path),"wb") as d:
+                if not image_url or image_url.startswith("data:image/svg"):
+                    continue
+
+                if image_url.lower().endswith((".png", ".jpg", ".jpeg", ".webp")):
+                    re_image = requests.get(image_url)
+
+                    download_path = f"download_image{image_counter}.png"
+                    with open(os.path.join(full_folder_path, download_path), "wb") as d:
                         d.write(re_image.content)
+
+                    image_counter += 1
+            print("images")
+            print(images)
             files_names=[]
             multi_images=[]
             for i in os.listdir(full_folder_path):
@@ -288,9 +303,10 @@ def summarize(link,slides_path):
                         full_path = os.path.join(full_folder_path, i)
                         multi_images.append(full_path)
                         files_names.append(i)
+            print("multi image")
+            print(multi_images)
 
             filenames_text = "\n".join(f"{i+1}. {fn}" for i, fn in enumerate(files_names[:5]))
-            
             json_summarization=json.dumps(summarization[:-1])
             
             agent_2_response=ollama.chat(
