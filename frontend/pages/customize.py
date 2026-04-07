@@ -165,7 +165,7 @@ with middle_col:
 
 @st.dialog("Enter video settings")
 def video_dialog():
-    duration = st.number_input("Duration", 0, 10, 1)
+    duration = st.number_input("Duration (Seconds)", 0, 10, 1)
     if st.button("OK"):
         payload = {
             "path": selected_slide_path,
