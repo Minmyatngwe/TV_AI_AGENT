@@ -99,7 +99,7 @@ if powerpoint_paths:
         if os.path.basename(i)==choose:
             selected_slide_path=i
 
-left_col, sp1, middle_col, sp, right_col = st.columns([20,28,20,40,10])
+left_col, sp1, middle_col, sp, right_col = st.columns([20,20,20,25,10])
     
 with left_col:
     if st.button("Change image",type="primary"):
@@ -193,9 +193,6 @@ def video_dialog():
             mime="application/zip"
         )
 
-        
-            
-        
 
 
 
@@ -204,6 +201,6 @@ with right_col:
         video_dialog()
         
     
-
-if st.button("Back to Home", type="secondary"):
-    st.switch_page("pages/home.py")
+# with middle_col:
+#     if st.button("Back to Home", type="secondary"):
+#         st.switch_page("pages/home.py")
